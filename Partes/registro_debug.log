@@ -1,0 +1,3 @@
+2025-08-28 16:48:27,075 | DEBUG | Aplicación iniciada
+2025-08-28 16:48:32,548 | DEBUG | Click en Entrar
+2025-08-28 16:48:32,548 | DEBUG | Intentando conectar a MySQL en 127.0.0.1:3306 como root a BD fiter

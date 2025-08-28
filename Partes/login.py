@@ -9,12 +9,11 @@ root.configure(bg="#1dc1dd")
 root.resizable(False,False)
 
 def signin():
-    CorreoElectronico=user.get()
-    FechadeNacimiento=date.get()
-    Contraseña=code.get()
-    Nombre=nombre.get()
-    Apellido=apellido.get()
-
+    correo_electronico = user.get()
+    fecha_de_nacimiento = date.get()
+    contraseña = code.get()
+    nombre_data = nombre.get()
+    apellido_data = apellido.get()
 
 img = PhotoImage(file='../imagenes/fiterLogo.png')
 Label(root, image= img, bg= "#1dc1dd").place (x=50, y=50)
@@ -53,6 +52,20 @@ code.insert(0,'Contraseña')
 code.bind('<FocusIn>', on_enter)
 code.bind('<FocusOut>', on_leave)
 Frame(frame,width=295,height=2,bg='black').place(x=25,y=150)
+
+def crear_entry(frame, placeholder, y, show=None):
+    """Crea un Entry con placeholder y devuelve la referencia"""
+    entry = Entry(frame, width=35, fg='black', border=0, bg='white',
+                  font=('Billie DEMO Light', 11), show=show)
+    entry.place(x=30, y=y)
+    entry.insert(0, placeholder)
+
+user = crear_entry(frame, "Correo Electronico", 60)
+nombre = crear_entry(frame, "Nombre", 120)
+apellido = crear_entry(frame, "Apellido", 180)
+date = crear_entry(frame, "Fecha de Nacimiento", 240)
+code = crear_entry(frame, "Contraseña", 300, show="*")
+
 
 def abrir_registro():
     root.destroy() 
