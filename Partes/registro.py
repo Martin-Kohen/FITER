@@ -4,7 +4,7 @@ import subprocess
 import mysql.connector
 import re
 from tkcalendar import DateEntry
-from datetime import datetime
+from datetime import datetime, date as dt_date
 import hashlib
 
 root = Tk()
@@ -23,7 +23,7 @@ def registro():
     CorreoElectronico = user.get()
     Nombre = nombre.get()
     Apellido = apellido.get()
-    Fecha_de_nacimiento = date.get()
+    Fecha_de_nacimiento = fecha_entry.get()  # usamos fecha_entry en lugar de date
     Contrasena = code.get()
 
     if (CorreoElectronico in ('', 'Correo Electronico') or 
@@ -43,7 +43,8 @@ def registro():
     except ValueError:
         messagebox.showerror('Error de Fecha', 'Formato de fecha incorrecto. Use AAAA-MM-DD.')
         return
-
+    
+    
     db = None
     try:
         db = mysql.connector.connect(
@@ -67,7 +68,7 @@ def registro():
         db.commit()
         messagebox.showinfo('Éxito', '¡Registro exitoso!')
 
-        for e, placeholder in zip([user, nombre, apellido, date, code], 
+        for e, placeholder in zip([user, nombre, apellido, fecha_entry, code], 
                                   ['Correo Electronico', 'Nombre', 'Apellido', 'Fecha de Nacimiento', 'Contraseña']):
             e.delete(0, 'end')
             e.insert(0, placeholder)
@@ -134,10 +135,10 @@ apellido.bind('<FocusIn>', lambda e: on_enter(e, apellido, 'Apellido'))
 apellido.bind('<FocusOut>', lambda e: on_leave(e, apellido, 'Apellido'))
 Frame(frame, width=295, height=2, bg='black').place(x=25, y=207)
 
-date = DateEntry(frame, width=43, foreground='black', borderwidth=2, background='white', date_pattern="yyyy-mm-dd")
-date.place(x=30, y=240)
-date.insert(0, 'Fecha de Nacimiento ')
+fecha_entry = DateEntry(frame, width=32, foreground='black', borderwidth=2, background='white', date_pattern="yyyy-mm-dd", state="readonly", font=('Billie DEMO Light', 11))
 Frame(frame, width=295, height=2, bg='black').place(x=25, y=267)
+fecha_entry.place(x=30, y=240)
+fecha_entry.set_date(dt_date.today())
 
 code = Entry(frame, width=35, fg='black', border=0, bg='white', font=('Billie DEMO Light', 11))
 code.place(x=30, y=300)
