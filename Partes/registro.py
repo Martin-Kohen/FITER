@@ -3,8 +3,8 @@ from tkinter import messagebox
 import subprocess
 import mysql.connector
 import re
-from tkcalendar import DateEntry
-from datetime import datetime, date as dt_date
+from tkcalendar import Calendar
+from datetime import datetime
 import hashlib
 
 root = Tk()
@@ -23,9 +23,10 @@ def registro():
     CorreoElectronico = user.get()
     Nombre = nombre.get()
     Apellido = apellido.get()
-    Fecha_de_nacimiento = fecha_entry.get()  # usamos fecha_entry en lugar de date
+    Fecha_de_nacimiento = fecha_var.get()
     Contrasena = code.get()
 
+    # Validar campos vacíos o placeholders
     if (CorreoElectronico in ('', 'Correo Electronico') or 
         Nombre in ('', 'Nombre') or 
         Apellido in ('', 'Apellido') or 
@@ -43,8 +44,7 @@ def registro():
     except ValueError:
         messagebox.showerror('Error de Fecha', 'Formato de fecha incorrecto. Use AAAA-MM-DD.')
         return
-    
-    
+
     db = None
     try:
         db = mysql.connector.connect(
@@ -84,7 +84,6 @@ def registro():
         if db and db.is_connected():
             cursor.close()
             db.close()
-
 
 def on_enter(e, entry, placeholder):
     if entry.get() == placeholder:
@@ -135,10 +134,41 @@ apellido.bind('<FocusIn>', lambda e: on_enter(e, apellido, 'Apellido'))
 apellido.bind('<FocusOut>', lambda e: on_leave(e, apellido, 'Apellido'))
 Frame(frame, width=295, height=2, bg='black').place(x=25, y=207)
 
-fecha_entry = DateEntry(frame, width=32, foreground='black', borderwidth=2, background='white', date_pattern="yyyy-mm-dd", state="readonly", font=('Billie DEMO Light', 11))
-Frame(frame, width=295, height=2, bg='black').place(x=25, y=267)
+fecha_var = StringVar()
+fecha_var.set("Fecha de Nacimiento")
+
+fecha_entry = Entry(frame, textvariable=fecha_var, width=35, fg='black', font=('Billie DEMO Light', 11))
 fecha_entry.place(x=30, y=240)
-fecha_entry.set_date(dt_date.today())
+Frame(frame, width=295, height=2, bg='black').place(x=25, y=267)
+
+def abrir_calendario(e):
+    x = fecha_entry.winfo_rootx()
+    y = fecha_entry.winfo_rooty() + fecha_entry.winfo_height()
+    
+    top = Toplevel(root)
+    top.geometry(f"+{x}+{y}")  
+    top.grab_set()
+    
+    cal = Calendar(top, selectmode='day', date_pattern='yyyy-mm-dd')
+    cal.pack(padx=10, pady=10)
+
+    def seleccionar():
+        fecha_var.set(cal.get_date())
+        top.destroy()
+
+    Button(top, text="Seleccionar", command=seleccionar).pack(pady=5)
+
+def limpiar_placeholder(e):
+    if fecha_var.get() == "Fecha de Nacimiento":
+        fecha_var.set("")
+
+def restaurar_placeholder(e):
+    if fecha_var.get() == "":
+        fecha_var.set("Fecha de Nacimiento")
+
+fecha_entry.bind('<Button-1>', abrir_calendario)
+fecha_entry.bind('<FocusIn>', limpiar_placeholder)
+fecha_entry.bind('<FocusOut>', restaurar_placeholder)
 
 code = Entry(frame, width=35, fg='black', border=0, bg='white', font=('Billie DEMO Light', 11))
 code.place(x=30, y=300)
