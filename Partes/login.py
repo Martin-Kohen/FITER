@@ -11,16 +11,14 @@ root.geometry('1200x500+300+200')
 root.configure(bg="#1dc1dd")
 root.resizable(False, False)
 
-# --- Función para hashear contraseña ---
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# --- Función de Login ---
 def signin():
-    correo_electronico = user.get()
-    contraseña = code.get()
+    CorreoElectronico = user.get()
+    Contrasena = code.get()
 
-    if correo_electronico in ("", "Correo Electronico") or contraseña in ("", "Contraseña"):
+    if CorreoElectronico in ("", "Correo Electronico") or Contrasena in ("", "Contraseña"):
         messagebox.showerror("Error", "Por favor, complete todos los campos.")
         return
 
@@ -28,19 +26,21 @@ def signin():
         db = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="root",
+            password="",
             database="fiter"
         )
         cursor = db.cursor()
-        cursor.execute("SELECT Contrasenia FROM usuario WHERE Mail = %s", (correo_electronico,))
+        cursor.execute("SELECT Nombre, Contrasenia FROM usuario WHERE Mail = %s", (CorreoElectronico,))
         result = cursor.fetchone()
 
         if not result:
             messagebox.showerror("Error", "El usuario no existe.")
         else:
-            contraseña_bd = result[0]
-            if hash_password(contraseña) == contraseña_bd:
+            NombreUsuario, ContraseniaBD = result
+            if hash_password(Contrasena) == ContraseniaBD:
                 messagebox.showinfo("Éxito", "¡Inicio de sesión correcto!")
+                root.destroy()
+                subprocess.Popen(["python", "home.py", NombreUsuario])
             else:
                 messagebox.showerror("Error", "Contraseña incorrecta.")
     except Exception as e:
@@ -50,7 +50,6 @@ def signin():
             cursor.close()
             db.close()
 
-# --- GUI ---
 try:
     img = PhotoImage(file='../imagenes/fiterLogo.png')
     Label(root, image=img, bg="#1dc1dd").place(x=50, y=50)

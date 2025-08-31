@@ -7,21 +7,18 @@ from tkcalendar import DateEntry
 from datetime import datetime
 import hashlib
 
-# --- Ventana ---
 root = Tk()
 root.title('Registro')
 root.geometry('1200x500+300+200')
 root.configure(bg="#1dc1dd")
 root.resizable(False, False)
 
-# --- Función para hashear contraseña ---
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def validar_correo(correo):
     return "@" in correo and "." in correo.split("@")[-1]
 
-# --- Función de Registro ---
 def registro():
     CorreoElectronico = user.get()
     Nombre = nombre.get()
@@ -29,7 +26,6 @@ def registro():
     Fecha_de_nacimiento = date.get()
     Contrasena = code.get()
 
-    # --- Verificar campos vacíos ---
     if (CorreoElectronico in ('', 'Correo Electronico') or 
         Nombre in ('', 'Nombre') or 
         Apellido in ('', 'Apellido') or 
@@ -38,12 +34,10 @@ def registro():
         messagebox.showerror('Error', 'Por favor, complete todos los campos.')
         return
 
-    # --- Validar formato del correo ---
     if not validar_correo(CorreoElectronico):
         messagebox.showerror('Error de Correo', 'Formato de correo inválido.')
         return
 
-    # --- Validar fecha ---
     try:
         fecha_obj = datetime.strptime(Fecha_de_nacimiento, '%Y-%m-%d').date()
     except ValueError:
@@ -55,11 +49,11 @@ def registro():
         db = mysql.connector.connect(
             host="localhost", 
             user="root", 
-            password="root", 
+            password="", 
             database="fiter"
         )
         cursor = db.cursor()
-        cursor.execute("SELECT Mail FROM usuario WHERE Mail = %s", (CorreoElectronico,))
+        cursor.execute("SELECT Nombre, Contrasenia FROM usuario WHERE Mail = %s", (CorreoElectronico,))
         result = cursor.fetchone()
         if result:
             messagebox.showerror('Error', 'El correo ya existe.')
@@ -73,7 +67,6 @@ def registro():
         db.commit()
         messagebox.showinfo('Éxito', '¡Registro exitoso!')
 
-        # Limpiar entradas
         for e, placeholder in zip([user, nombre, apellido, date, code], 
                                   ['Correo Electronico', 'Nombre', 'Apellido', 'Fecha de Nacimiento', 'Contraseña']):
             e.delete(0, 'end')
@@ -91,7 +84,7 @@ def registro():
             cursor.close()
             db.close()
 
-# --- Entradas ---
+
 def on_enter(e, entry, placeholder):
     if entry.get() == placeholder:
         entry.delete(0, 'end')
@@ -143,7 +136,7 @@ Frame(frame, width=295, height=2, bg='black').place(x=25, y=207)
 
 date = DateEntry(frame, width=43, foreground='black', borderwidth=2, background='white', date_pattern="yyyy-mm-dd")
 date.place(x=30, y=240)
-date.insert(0, 'Fecha de Nacimiento')
+date.insert(0, 'Fecha de Nacimiento ')
 Frame(frame, width=295, height=2, bg='black').place(x=25, y=267)
 
 code = Entry(frame, width=35, fg='black', border=0, bg='white', font=('Billie DEMO Light', 11))
