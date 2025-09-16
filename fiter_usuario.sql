@@ -29,9 +29,11 @@ CREATE TABLE `usuario` (
   `Mail` varchar(255) NOT NULL,
   `Contrasenia` varchar(255) NOT NULL,
   `Fecha_de_nacimiento` date DEFAULT NULL,
+  `Rol` varchar(20) NOT NULL,
+  `logueado` tinyint(1) NOT NULL,
   PRIMARY KEY (`idUsuario`),
   UNIQUE KEY `IdUsuario` (`idUsuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,7 +42,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
-INSERT INTO `usuario` VALUES (1,'tobi','inzuz','tobi','juanpene','2006-04-14'),(2,'asda','tobi','asefd','tobi','2025-08-14'),(3,'asdda','asdad','sadasd','ed08c290d7e22f7bb324b15cbadce35b0b348564fd2d5f95752388d86d71bcca','2025-08-13'),(4,'awdad','awdada','dwad','d3b65fd93db07b5d7d9c0a239875ae271b35a13e6fb20b5eafeae599e96a98e1','2025-08-02'),(5,'asdad','adas','asdaa','50ad41624c25e493aa1dc7f4ab32bdc5a3b0b78ecc35b539936e3fea7c565af7','2025-08-07'),(6,'asdsad','adasd','asdasd','2e17b6c1df874c4ef3a295889ba8dd7170bc5620606be9b7c14192c1b3c567aa','2025-07-30'),(7,'asdasdasd','asdad','dasd','2aeb25716a0a859efb6c2607950ee8293e1c25a57259c46db9b60f30858a21fe','2025-08-11'),(8,'adsadad','dasda','dasdsads@gmail.com','2aeb25716a0a859efb6c2607950ee8293e1c25a57259c46db9b60f30858a21fe','2025-07-31'),(9,'asdad','adsad','asdad@saa.ss','2aeb25716a0a859efb6c2607950ee8293e1c25a57259c46db9b60f30858a21fe','2025-08-20');
+INSERT INTO `usuario` VALUES (1,'awdaa','awd','awda@wda.com','38816a4bbe78aa3dbff468dc0d08c217df8cc3b4f3c3fd9f139bab84d69dff5c','2025-09-18','Empleado',0),(2,'juan','ojeda','juan@gmail.com','ed08c290d7e22f7bb324b15cbadce35b0b348564fd2d5f95752388d86d71bcca','2025-09-10','Empleado',0),(3,'soyjuanysoygay','inzunza','tobi@gmail.com','cd6f33ab869d39460147064d5c5a72f182f7bb9502ed73f8e239a5a62ff69d42','2025-09-16','Gerente',0),(4,'juan','juan','juan1@gmail.com','ed08c290d7e22f7bb324b15cbadce35b0b348564fd2d5f95752388d86d71bcca','2025-09-17','Gerente',0),(5,'tt','t','tobia@gmail.com','e3b98a4da31a127d4bde6e43033f66ba274cab0eb7eb1c70ec41402bf6273dd8','2025-09-16','Gerente',0);
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -53,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-08-29 21:30:38
+-- Dump completed on 2025-09-16 17:45:03
