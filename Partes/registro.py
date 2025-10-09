@@ -13,11 +13,29 @@ root.geometry('1200x600+300+200')
 root.configure(bg="#1dc1dd")
 root.resizable(False, False)
 
+# --- CONFIGURACIÓN DE BASE DE DATOS ---
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "",
+    "database": "fiter"
+}
+# -------------------------------------
+
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def validar_correo(correo):
     return re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', correo) is not None
+
+def conectar_bd():
+    """Establece y devuelve una conexión a la base de datos."""
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
+    except mysql.connector.Error as err:
+        messagebox.showerror("Error de Conexión", f"No se pudo conectar a la BD: {err}")
+        return None
 
 def registro():
     correo = user.get().strip()
@@ -25,9 +43,9 @@ def registro():
     apellido_usuario = apellido.get().strip()
     fecha_nac = fecha_var.get()
     contrasena = code.get()
-    rol = rol_var.get()
+    rol = rol_var.get() # 'Gerente' o 'Empleado'
 
-    # Validación de campos
+    # 1. Validación de campos inicial
     if correo in ('', 'Correo Electronico') or nombre_usuario in ('', 'Nombre') or \
        apellido_usuario in ('', 'Apellido') or fecha_nac in ('', 'Fecha de Nacimiento') or \
        contrasena in ('', 'Contraseña') or rol == "Seleccionar Rol":
@@ -44,29 +62,52 @@ def registro():
         messagebox.showerror('Error', 'Formato de fecha incorrecto. Use AAAA-MM-DD.')
         return
 
-    db = None
+    db = conectar_bd()
+    if not db: return
+    
+    cursor = db.cursor()
+    id_empleado = None
+
     try:
-        db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="fiter"
-        )
-        cursor = db.cursor()
+        # --- 2. VALIDACIÓN CRÍTICA CONTRA RR.HH. ---
+        # Verificamos si el empleado existe en RR.HH. con el Nombre, Apellido y Puesto (Rol)
+        sql_rrhh = "SELECT ID_Empleado FROM Empleados_RRHH WHERE Nombre = %s AND Apellido = %s AND Puesto = %s"
+        cursor.execute(sql_rrhh, (nombre_usuario, apellido_usuario, rol))
+        empleado_data = cursor.fetchone()
+
+        if not empleado_data:
+            messagebox.showerror('Acceso Denegado', 
+                                 f'El usuario {nombre_usuario} {apellido_usuario} no está registrado en RR.HH. con el rol de "{rol}".\n'
+                                 'Debe ser dado de alta como empleado o gerente por el área de RR.HH. primero.')
+            return
+
+        id_empleado = empleado_data[0] # Tomamos el ID del empleado para usarlo como idUsuario
+
+        # --- 3. VALIDACIÓN DE DUPLICADOS EN USUARIO ---
+        # Verificamos si el correo o el ID de empleado (que será el idUsuario) ya existe
         cursor.execute("SELECT Mail FROM usuario WHERE Mail = %s", (correo,))
         if cursor.fetchone():
             messagebox.showerror('Error', 'El correo ya existe.')
             return
 
-        hashed_pass = hash_password(contrasena)
-        cursor.execute("""INSERT INTO usuario 
-                          (Nombre, Apellido, Mail, Contrasenia, Fecha_de_nacimiento, Rol, logueado)
-                          VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                       (nombre_usuario, apellido_usuario, correo, hashed_pass, fecha_obj, rol, 0))
-        db.commit()
-        messagebox.showinfo('Éxito', '¡Registro exitoso!')
+        cursor.execute("SELECT idUsuario FROM usuario WHERE idUsuario = %s", (id_empleado,))
+        if cursor.fetchone():
+            messagebox.showerror('Error', 'Ya existe una cuenta para este ID de empleado. Inicie sesión.')
+            return
 
-        # Limpiar campos
+        # --- 4. INSERCIÓN EN LA TABLA DE USUARIO ---
+        hashed_pass = hash_password(contrasena)
+        
+        sql_insert = """INSERT INTO usuario 
+                        (idUsuario, Nombre, Apellido, Mail, Contrasenia, Fecha_de_nacimiento, Rol, logueado)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+                        
+        cursor.execute(sql_insert,
+                        (id_empleado, nombre_usuario, apellido_usuario, correo, hashed_pass, fecha_obj, rol, 0))
+        db.commit()
+        messagebox.showinfo('Éxito', f'¡Registro exitoso!\nID de Usuario: {id_empleado}.')
+
+        # Limpiar campos y navegar
         for e, placeholder in zip([user, nombre, apellido, fecha_entry, code],
                                   ['Correo Electronico','Nombre','Apellido','Fecha de Nacimiento','Contraseña']):
             e.delete(0, 'end')
@@ -78,7 +119,7 @@ def registro():
         abrir_login()
     except Exception as e:
         messagebox.showerror('Error Inesperado', f'Ocurrió un error: {e}')
-        if db and db.is_connected():
+        if db.is_connected():
             db.rollback()
     finally:
         if db and db.is_connected():
@@ -104,7 +145,7 @@ def abrir_login():
     except FileNotFoundError:
         messagebox.showerror("Error", "No se encontró login.py")
 
-# --- Entradas y menú ---
+# --- Entradas y menú (UI) ---
 frame = Frame(root, width=500, height=550, bg="#1dc1dd")
 frame.place(x=480, y=40)
 
