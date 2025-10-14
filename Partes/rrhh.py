@@ -8,7 +8,7 @@ from datetime import date
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
-    "password": "",
+    "password": "", # Asegúrate de que esta sea tu contraseña, si tienes una.
     "database": "fiter"
 }
 
@@ -21,16 +21,15 @@ def conectar_bd():
         messagebox.showerror("Error de Conexión", f"No se pudo conectar a la BD: {err}")
         return None
 
-# --- Funciones de Lógica de RR.HH. (Mapeo del Diagrama de Flujo) ---
-
 # ----------------- GESTIÓN DE EMPLEADOS -----------------
 
 def alta_empleado(parent_window):
-    """Flujo: ¿Desea dar de alta un empleado? -> Ingresar datos -> Guardar en BD"""
-    # 1. Solicitar Datos
-    id_empleado = simpledialog.askinteger("Alta Empleado", "ID Empleado:", parent=parent_window)
-    if not id_empleado: return
-
+    """
+    Flujo: Da de alta un empleado sin solicitar el ID, 
+    permitiendo que la BD lo auto-incremente.
+    """
+    # 1. Solicitar Datos (YA NO SE PIDE ID_Empleado)
+    
     nombre = simpledialog.askstring("Alta Empleado", "Nombre:", parent=parent_window)
     if not nombre: return
 
@@ -44,7 +43,7 @@ def alta_empleado(parent_window):
     try:
         fecha_contratacion = date.fromisoformat(fecha_contratacion_str)
     except (ValueError, TypeError):
-        messagebox.showerror("Error", "Formato de fecha incorrecto.")
+        messagebox.showerror("Error", "Formato de fecha incorrecto (debe ser YYYY-MM-DD).")
         return
 
     # 2. Guardar en BD (Empleados_RRHH)
@@ -52,16 +51,24 @@ def alta_empleado(parent_window):
     if conn:
         cursor = conn.cursor()
         try:
-            sql = """INSERT INTO Empleados_RRHH (ID_Empleado, Nombre, Apellido, Puesto, Fecha_Contratacion) 
-                     VALUES (%s, %s, %s, %s, %s)"""
-            cursor.execute(sql, (id_empleado, nombre, apellido, puesto, fecha_contratacion))
+            # SQL CORREGIDO: OMITE ID_Empleado de la lista de columnas
+            sql = """INSERT INTO Empleados_RRHH (Nombre, Apellido, Puesto, Fecha_Contratacion) 
+                     VALUES (%s, %s, %s, %s)"""
+            
+            # VALORES CORREGIDOS: OMITE el valor de ID_Empleado
+            cursor.execute(sql, (nombre, apellido, puesto, fecha_contratacion))
             conn.commit()
-            messagebox.showinfo("Éxito", f"Empleado {nombre} {apellido} registrado con éxito.")
+            
+            # Opcional: Obtener y mostrar el ID generado
+            nuevo_id = cursor.lastrowid
+            messagebox.showinfo("Éxito", f"Empleado {nombre} {apellido} registrado con éxito.\nID Generado: {nuevo_id}")
+            
         except mysql.connector.Error as err:
             messagebox.showerror("Error de BD", f"Error al insertar el empleado: {err}")
         finally:
             cursor.close()
             conn.close()
+
 
 def baja_empleado(parent_window):
     """Flujo: ¿Desea dar de baja un empleado? -> Seleccionar empleado -> Actualizar BD"""
@@ -75,8 +82,6 @@ def baja_empleado(parent_window):
     if conn:
         cursor = conn.cursor()
         try:
-            # Nota: En sistemas reales se usaría un campo 'Estado' (Activo/Inactivo)
-            # Aquí, para simplicidad, usamos DELETE.
             sql = "DELETE FROM Empleados_RRHH WHERE ID_Empleado = %s"
             cursor.execute(sql, (id_a_borrar,))
             if cursor.rowcount > 0:
@@ -95,6 +100,7 @@ def modificar_empleado(parent_window):
     id_modificar = simpledialog.askinteger("Modificar Empleado", "Ingresa el ID del empleado a modificar:", parent=parent_window)
     if id_modificar is None: return
 
+    # Se podría modificar más campos, aquí solo se pide el puesto como ejemplo.
     nuevo_puesto = simpledialog.askstring("Modificar Empleado", f"Nuevo Puesto para ID {id_modificar}:", parent=parent_window)
     if not nuevo_puesto: return
 
@@ -134,7 +140,9 @@ def ver_lista_empleados():
 
             if empleados:
                 for emp in empleados:
-                    emp_str = f"{emp[0]} | {emp[1]} | {emp[2]} | {emp[3]} | {emp[4]}"
+                    # Formatear la fecha para que se vea bien
+                    fecha_contratacion = emp[4].strftime("%Y-%m-%d") if isinstance(emp[4], date) else str(emp[4])
+                    emp_str = f"{emp[0]} | {emp[1]} | {emp[2]} | {emp[3]} | {fecha_contratacion}"
                     Label(top, text=emp_str, bg="#f0f0ff", fg="black",
                           font=("Arial", 10), anchor="w").pack(fill=X, padx=10, pady=1)
             else:
@@ -150,7 +158,7 @@ def ver_lista_empleados():
 
 def ver_posibles_candidatos():
     """Flujo: ¿Desea ver posibles candidatos? -> Ver lista de postulantes"""
-    # Consulta a la tabla Reclutamiento para ver los procesos abiertos
+    # Esta función requiere una tabla 'Reclutamiento' en tu BD
     top = Toplevel()
     top.title("Procesos de Reclutamiento (Candidatos)")
     top.geometry("800x400")
@@ -160,7 +168,9 @@ def ver_posibles_candidatos():
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute("SELECT ID_Reclutamiento, Descripcion_Puesto, Salario_Ofrecido, Estado_Proceso FROM Reclutamiento WHERE Estado_Proceso != 'Cerrado'")
+            # Nota: Esta consulta ASUME que tienes la tabla 'Reclutamiento'
+            sql_reclutamiento = "SELECT ID_Reclutamiento, Descripcion_Puesto, Salario_Ofrecido, Estado_Proceso FROM Reclutamiento WHERE Estado_Proceso != 'Cerrado'"
+            cursor.execute(sql_reclutamiento)
             procesos = cursor.fetchall()
 
             header = "ID | Puesto | Salario Ofrecido | Estado"
@@ -168,7 +178,8 @@ def ver_posibles_candidatos():
 
             if procesos:
                 for proc in procesos:
-                    proc_str = f"{proc[0]} | {proc[1][:40]}... | ${proc[2]:.2f} | {proc[3]}"
+                    salario_formateado = f"${proc[2]:,.2f}" if proc[2] is not None else "N/A"
+                    proc_str = f"{proc[0]} | {proc[1][:30]}... | {salario_formateado} | {proc[3]}"
                     Label(top, text=proc_str, bg="#f0f0ff", fg="black",
                           font=("Arial", 10), anchor="w").pack(fill=X, padx=10, pady=1)
             else:
@@ -185,11 +196,10 @@ def ver_posibles_candidatos():
 def actualizar_maestros():
     """
     Simulación del botón de Finanzas que actualiza los maestros de RR.HH.
-    Esta función simula que RR.HH. es el origen de los datos maestros.
     """
     messagebox.showinfo("Actualizar Maestros",
-                        "RR.HH. es el origen de los datos. La lista de Empleados está actualizada.\n"
-                        "Si el módulo de Finanzas necesita la lista, debe consultarla aquí.")
+                         "RR.HH. es el origen de los datos. La lista de Empleados está actualizada.\n"
+                         "Si el módulo de Finanzas necesita la lista, debe consultarla aquí.")
 
 
 # --- Función Principal de la Ventana de RR.HH. ---
@@ -206,8 +216,8 @@ def abrir_rrhh(parent_window, nombre_usuario):
     # --- Función para volver al home ---
     def volver_home():
         root.destroy()
-        parent_window.deiconify()       
-        parent_window.state("zoomed")   
+        parent_window.deiconify() 
+        parent_window.state("zoomed") 
 
     # --- Contenedores ---
     frame_top = Frame(root, bg="#1dc1dd")
@@ -223,30 +233,30 @@ def abrir_rrhh(parent_window, nombre_usuario):
     frame_acciones = Frame(root, bg="#1dc1dd")
     frame_acciones.pack(pady=20, fill=X)
     
-    # --- Fila 1: Gestión de Empleados (Mapeo de las decisiones del diagrama) ---
+    # --- Fila 1: Gestión de Empleados ---
     frame_empleados = Frame(frame_acciones, bg="#1dc1dd")
     frame_empleados.pack(pady=5)
     Label(frame_empleados, text="Gestión de Empleados", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
     frame_botones_emp = Frame(frame_empleados, bg="#1dc1dd")
     frame_botones_emp.pack()
 
-    # Alta de Empleado
-    Button(frame_botones_emp, text="➕ Dar de Alta", bg="#28a745", fg="white", font=("Arial", 12, "bold"),
+    # Alta de Empleado (USA LA FUNCIÓN CORREGIDA)
+    Button(frame_botones_emp, text="Dar de Alta", bg="#0089a1", fg="white", font=("Arial", 12, "bold"),
            width=18, command=lambda: alta_empleado(root)).pack(side=LEFT, padx=5)
 
     # Baja de Empleado
-    Button(frame_botones_emp, text="➖ Dar de Baja", bg="#dc3545", fg="white", font=("Arial", 12, "bold"),
+    Button(frame_botones_emp, text="Dar de Baja", bg="#0089a1", fg="white", font=("Arial", 12, "bold"),
            width=18, command=lambda: baja_empleado(root)).pack(side=LEFT, padx=5)
 
     # Modificar Empleado
-    Button(frame_botones_emp, text="✏️ Modificar Datos", bg="#ffc107", fg="black", font=("Arial", 12, "bold"),
+    Button(frame_botones_emp, text="Modificar Datos", bg="#0089a1", fg="white", font=("Arial", 12, "bold"),
            width=18, command=lambda: modificar_empleado(root)).pack(side=LEFT, padx=5)
 
     # Consultar/Ver Empleados
-    Button(frame_botones_emp, text="📄 Ver Empleados", bg="#007bff", fg="white", font=("Arial", 12, "bold"),
+    Button(frame_botones_emp, text="Ver Empleados", bg="#0089a1", fg="white", font=("Arial", 12, "bold"),
            width=18, command=ver_lista_empleados).pack(side=LEFT, padx=5)
-           
-    # --- Fila 2: Reclutamiento y Conexión (Mapeo de Candidatos y Maestros) ---
+    
+    # --- Fila 2: Reclutamiento y Conexión ---
     frame_reclutamiento = Frame(frame_acciones, bg="#1dc1dd")
     frame_reclutamiento.pack(pady=5)
     Label(frame_reclutamiento, text="Reclutamiento y Conexión de Datos", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
@@ -254,11 +264,11 @@ def abrir_rrhh(parent_window, nombre_usuario):
     frame_botones_rec.pack()
 
     # Ver Posibles Candidatos
-    Button(frame_botones_rec, text="🔍 Ver Candidatos", bg="#a44c9d", fg="white", font=("Arial", 12, "bold"),
+    Button(frame_botones_rec, text="Ver Candidatos", bg="#006779", fg="white", font=("Arial", 12, "bold"),
            width=25, command=ver_posibles_candidatos).pack(side=LEFT, padx=10)
-           
+    
     # Simulación de la actualización de maestros de Finanzas (Conexión)
-    Button(frame_botones_rec, text="📢 Actualizar Maestros (Finanzas)", bg="#00bcd4", fg="white", font=("Arial", 12, "bold"),
+    Button(frame_botones_rec, text="Actualizar Maestros (Finanzas)", bg="#006779", fg="white", font=("Arial", 12, "bold"),
            width=25, command=actualizar_maestros).pack(side=LEFT, padx=10)
 
 
@@ -267,7 +277,7 @@ def abrir_rrhh(parent_window, nombre_usuario):
 # --- Ejemplo de uso (simulando la ventana principal) ---
 if __name__ == '__main__':
     main_root = Tk()
-    main_root.title("Home")
+    main_root.title("Home (Simulación)")
     main_root.geometry("400x200")
     
     def ejecutar_rrhh():

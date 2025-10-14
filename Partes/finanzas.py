@@ -216,10 +216,10 @@ def abrir_finanzas(parent_window, nombre_usuario):
     frame_botones_op = Frame(frame_operaciones, bg="#1dc1dd")
     frame_botones_op.pack()
 
-    Button(frame_botones_op, text="💰 Registrar Ingreso", bg="#28a745", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: actualizar_ingreso(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="📝 Generar Presupuesto", bg="#e37222", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: generar_presupuesto(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="📈 Generar Plan Financiero", bg="#a44c9d", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: generar_plan_financiero(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="🔄 Actualizar Maestros", bg="#ffc107", fg="black", font=("Arial", 12, "bold"), width=22, command=actualizar_empleados_maquinas).pack(side=LEFT, padx=5)
+    Button(frame_botones_op, text="Registrar Ingreso", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: actualizar_ingreso(root)).pack(side=LEFT, padx=5)
+    Button(frame_botones_op, text="Generar Presupuesto", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: generar_presupuesto(root)).pack(side=LEFT, padx=5)
+    Button(frame_botones_op, text="Generar Plan Financiero", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: generar_plan_financiero(root)).pack(side=LEFT, padx=5)
+    Button(frame_botones_op, text="Actualizar Maestros", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=actualizar_empleados_maquinas).pack(side=LEFT, padx=5)
 
     # --- Fila 2: Consultas e Historiales ---
     frame_consultas = Frame(frame_acciones, bg="#1dc1dd")
@@ -228,10 +228,10 @@ def abrir_finanzas(parent_window, nombre_usuario):
     frame_botones_hist = Frame(frame_consultas, bg="#1dc1dd")
     frame_botones_hist.pack()
 
-    Button(frame_botones_hist, text="🔎 Historial Ingresos", bg="#007bff", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_ingresos).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="🔎 Historial Presupuestos", bg="#007bff", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_presupuestos).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="🔎 Historial Planes", bg="#007bff", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_planes).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="👁️ Ver Bajas (Clientes/Maq)", bg="#6c757d", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_lista_bajas).pack(side=LEFT, padx=5)
+    Button(frame_botones_hist, text="Historial Ingresos", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_ingresos).pack(side=LEFT, padx=5)
+    Button(frame_botones_hist, text="Historial Presupuestos", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_presupuestos).pack(side=LEFT, padx=5)
+    Button(frame_botones_hist, text="Historial Planes", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_planes).pack(side=LEFT, padx=5)
+    Button(frame_botones_hist, text="Ver Bajas (Clientes/Maq)", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_lista_bajas).pack(side=LEFT, padx=5)
 
     # --- Fila 3: Bajas (Acciones de Eliminación) ---
     frame_bajas = Frame(frame_acciones, bg="#1dc1dd")

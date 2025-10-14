@@ -129,12 +129,12 @@ def consultar_campanas(frame_resultados):
                 for c in campanas:
                     # Mostrar la campaña como un botón simple
                     texto_campana = f"ID: {c[0]} | {c[1]} | {c[3]} a {c[4]}"
-                    Button(frame_resultados, text=texto_campana, bg="#ffffff", fg="black", font=("Arial", 12),
+                    Button(frame_resultados, text=texto_campana, bg="#ffffff", fg="black", font=("Billie DEMO Light", 12),
                            # Al igual que en tu modelo, un comando simple al hacer clic
                            command=lambda id_c=c[0], nombre_c=c[1]: messagebox.showinfo("Detalles", f"Objetivo de {nombre_c}: {c[2]}")
                            ).pack(fill=X, padx=20, pady=2)
             else:
-                Label(frame_resultados, text="No hay campañas registradas.", bg="#1dc1dd", fg="black", font=("Arial", 12)).pack(pady=20)
+                Label(frame_resultados, text="No hay campañas registradas.", bg="#1dc1dd", fg="black", font=("Billie DEMO Light", 12)).pack(pady=20)
 
         except mysql.connector.Error as err:
             messagebox.showerror("Error de BD", f"Error al consultar la BD: {err}")
@@ -165,10 +165,10 @@ def abrir_marketing(parent_window, nombre_usuario):
     frame_top.pack(pady=10, fill=X)
     
     Button(frame_top, text="← Volver al Home", bg="#ff4d4d", fg="white",
-           font=("Arial", 12, "bold"), command=volver_home).pack(pady=5, padx=20, fill=X)
+           font=("Billie DEMO Light", 12, "bold"), command=volver_home).pack(pady=5, padx=20, fill=X)
     
     Label(frame_top, text="Gestión de Campañas de Marketing", bg="#1dc1dd", fg="white",
-          font=("Arial", 18, "bold")).pack(pady=10)
+          font=("Billie DEMO Light", 18, "bold")).pack(pady=10)
 
 
     # Frame para los botones de acción (Alta, Baja, Modificar, Consultar)
@@ -182,46 +182,28 @@ def abrir_marketing(parent_window, nombre_usuario):
     # --- Botones de Acción de Campañas (Simulando el flujo del diagrama) ---
     
     # 1. Alta (¿Deseas dar de alta una campaña?)
-    Button(frame_acciones, text="➕ Dar de Alta Campaña", bg="#28a745", fg="white",
-           font=("Arial", 12, "bold"),
+    Button(frame_acciones, text="Dar de Alta Campaña", bg="#0089a1", fg="white",
+           font=("Billie DEMO Light", 12, "bold"),
            command=lambda: alta_campana(root, frame_resultados)).pack(side=LEFT, padx=10, expand=True)
 
     # 2. Baja (¿Deseas dar de baja una campaña?)
-    Button(frame_acciones, text="➖ Dar de Baja Campaña", bg="#dc3545", fg="white",
-           font=("Arial", 12, "bold"),
+    Button(frame_acciones, text="Dar de Baja Campaña", bg="#0089a1", fg="white",
+           font=("Billie DEMO Light", 12, "bold"),
            command=lambda: baja_campana(root, frame_resultados)).pack(side=LEFT, padx=10, expand=True)
 
     # 3. Modificar (¿Deseas modificar una campaña?)
-    Button(frame_acciones, text="✏️ Modificar Campaña", bg="#ffc107", fg="black",
-           font=("Arial", 12, "bold"),
+    Button(frame_acciones, text="Modificar Campaña", bg="#0089a1", fg="white",
+           font=("Billie DEMO Light", 12, "bold"),
            command=lambda: modificar_campana(root, frame_resultados)).pack(side=LEFT, padx=10, expand=True)
            
     # 4. Consultar/Ver (¿Deseas ver las campañas?)
-    Button(frame_acciones, text="📄 Ver/Actualizar Campañas", bg="#007bff", fg="white",
-           font=("Arial", 12, "bold"),
+    Button(frame_acciones, text="Ver/Actualizar Campañas", bg="#0089a1", fg="white",
+           font=("Billie DEMO Light", 12, "bold"),
            command=lambda: consultar_campanas(frame_resultados)).pack(side=LEFT, padx=10, expand=True)
 
-    # --- Botones de Enlaces (Redes Sociales/Web) ---
-    def abrir_enlaces(accion):
-        if accion == "Web":
-            messagebox.showinfo("Web", "Abriendo página web de la empresa...")
-            # Aquí iría la llamada a webbrowser.open_new("URL")
-        elif accion == "Instagram":
-            messagebox.showinfo("Instagram", "Abriendo Instagram de la empresa...")
-        elif accion == "LinkedIn":
-            messagebox.showinfo("LinkedIn", "Abriendo LinkedIn de la empresa...")
 
     frame_enlaces = Frame(root, bg="#1dc1dd")
     frame_enlaces.pack(pady=10, fill=X)
-    
-    Label(frame_enlaces, text="Enlaces Rápidos:", bg="#1dc1dd", fg="white", font=("Arial", 10)).pack(side=LEFT, padx=20)
-    
-    Button(frame_enlaces, text="🌐 Web", bg="#00bcd4", fg="white", font=("Arial", 10),
-           command=lambda: abrir_enlaces("Web")).pack(side=LEFT, padx=5)
-    Button(frame_enlaces, text="📸 RRSS (Instagram)", bg="#e1306c", fg="white", font=("Arial", 10),
-           command=lambda: abrir_enlaces("Instagram")).pack(side=LEFT, padx=5)
-    Button(frame_enlaces, text="💼 RRSS (LinkedIn)", bg="#0077b5", fg="white", font=("Arial", 10),
-           command=lambda: abrir_enlaces("LinkedIn")).pack(side=LEFT, padx=5)
 
     # Inicializar la lista de campañas al abrir la ventana
     consultar_campanas(frame_resultados)
