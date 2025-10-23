@@ -3,6 +3,7 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import mysql.connector
 from datetime import date
+import subprocess # Importación necesaria para ejecutar otro script
 
 # --- Configuración de la Base de Datos ---
 DB_CONFIG = {
@@ -225,36 +226,47 @@ def actualizar_maestros():
 # --- Función Principal de la Ventana de RR.HH. ---
 
 def abrir_rrhh(parent_window, nombre_usuario):
-    # Ya se oculta o destruye en el main, pero se mantiene la línea por si se llama de otra forma.
-    if parent_window.winfo_exists():
-        parent_window.withdraw() 
-
+    
     root = Toplevel()
     root.title(f"Recursos Humanos - Usuario: {nombre_usuario}")
     root.state("zoomed")
     root.configure(bg="#1dc1dd") # Fondo Turquesa
+    
+    # Ocultamos la ventana principal para que no sea visible si se estaba mostrando.
+    parent_window.withdraw()
 
-    # --- Función para volver al home ---
-    def volver_home():
+    # --- Función para Cerrar Sesión y ABRIR home_empleado.py ---
+    def cerrar_sesion():
         # Limpiar ventanas flotantes
         global lista_empleados_window, lista_candidatos_window
         if lista_empleados_window and lista_empleados_window.winfo_exists():
             lista_empleados_window.destroy()
-            lista_empleados_window = None
         if lista_candidatos_window and lista_candidatos_window.winfo_exists():
             lista_candidatos_window.destroy()
-            lista_candidatos_window = None
             
         root.destroy()
-        parent_window.deiconify() 
-        parent_window.state("zoomed") 
+        # 1. Cierra la aplicación actual de Tkinter (este script).
+        parent_window.quit() 
+        
+        # 2. Lanza el Home (home_empleado.py) como un nuevo proceso.
+        try:
+            # Usamos subprocess.Popen para que el nuevo script se ejecute de forma independiente
+            subprocess.Popen(["python", "home_deslog.py"]) 
+        except FileNotFoundError:
+            # Manejo de error si python no está en el PATH o el archivo no se encuentra
+            messagebox.showerror("Error de Inicio", "Asegúrate de que 'home_deslog.py' exista y Python esté en el PATH.")
+        
+    # Asignamos la función de cerrar sesión al botón 'X' de la ventana de RR.HH. también
+    root.protocol("WM_DELETE_WINDOW", cerrar_sesion)
 
-    # --- Contenedores y Botones (Se mantienen igual) ---
+
+    # --- Contenedores ---
     frame_top = Frame(root, bg="#1dc1dd")
     frame_top.pack(pady=10, fill=X)
     
-    Button(frame_top, text="← Volver al Home", bg="#ff4d4d", fg="white",
-           font=("Arial", 12, "bold"), command=volver_home).pack(pady=5, padx=20, fill=X)
+    # Botón 'Cerrar Sesión'
+    Button(frame_top, text="❌ Cerrar Sesión", bg="#ff4d4d", fg="white",
+           font=("Arial", 12, "bold"), command=cerrar_sesion).pack(pady=5, padx=20, fill=X)
     
     # ... (Resto de la interfaz de RR.HH. se mantiene igual) ...
     
@@ -300,17 +312,15 @@ def abrir_rrhh(parent_window, nombre_usuario):
 
     root.mainloop()
 
-# ----------------- MODIFICACIÓN CLAVE AQUÍ -----------------
+# ----------------- INICIO DEL PROGRAMA (ELIMINA LA VENTANA INICIAL) -----------------
 if __name__ == '__main__':
-    # 1. Creamos la ventana principal (Root) de Tkinter. ES NECESARIA para que funcione mainloop.
+    # Creamos la ventana principal (Root) de Tkinter. Es esencial para el mainloop.
     main_root = Tk()
-    main_root.title("Simulación de Home Oculto")
+    main_root.withdraw() # La ocultamos
+    main_root.title("Ventana Raíz Oculta")
     
-    # 2. **OCULTAMOS** la ventana principal inmediatamente.
-    main_root.withdraw()
-    
-    # 3. Llamamos directamente a la función que abre el módulo RR.HH.
+    # Iniciamos el módulo de RR.HH.
     abrir_rrhh(main_root, "Gerente RRHH")
     
-    # mainloop se mantiene para que el programa siga ejecutándose.
+    # El mainloop se mantiene hasta que cerrar_sesion lo termine.
     main_root.mainloop()
