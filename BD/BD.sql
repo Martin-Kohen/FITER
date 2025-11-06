@@ -221,32 +221,6 @@ INSERT INTO `departamentos` VALUES (1,'Direccion',85000.00),(2,'RRHH',120000.00)
 UNLOCK TABLES;
 
 --
--- Table structure for table `empleados`
---
-
-DROP TABLE IF EXISTS `empleados`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `empleados` (
-  `ID_Empleado` int(8) NOT NULL,
-  `Nombre` varchar(50) DEFAULT NULL,
-  `Apellido` varchar(50) DEFAULT NULL,
-  `Fecha_Contratacion` date DEFAULT NULL,
-  `ID_Departamento` int(8) NOT NULL,
-  PRIMARY KEY (`ID_Empleado`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `empleados`
---
-
-LOCK TABLES `empleados` WRITE;
-/*!40000 ALTER TABLE `empleados` DISABLE KEYS */;
-/*!40000 ALTER TABLE `empleados` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `empleados_rrhh`
 --
 
@@ -254,18 +228,20 @@ DROP TABLE IF EXISTS `empleados_rrhh`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `empleados_rrhh` (
-  `ID_Empleado` int(8) NOT NULL,
+  `ID_Empleado` int(8) NOT NULL AUTO_INCREMENT,
   `Nombre` varchar(50) DEFAULT NULL,
   `Apellido` varchar(50) DEFAULT NULL,
-  `Departamento` varchar(50) DEFAULT NULL,
   `Fecha_Nacimiento` date DEFAULT NULL,
   `Direccion` varchar(100) DEFAULT NULL,
   `Telefono` varchar(15) DEFAULT NULL,
   `Email` varchar(100) DEFAULT NULL,
   `Fecha_Contratacion` date DEFAULT NULL,
   `Puesto` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`ID_Empleado`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `ID_Departamento` int(8) unsigned DEFAULT NULL,
+  PRIMARY KEY (`ID_Empleado`),
+  KEY `fk_empleado_departamento` (`ID_Departamento`),
+  CONSTRAINT `fk_empleado_departamento` FOREIGN KEY (`ID_Departamento`) REFERENCES `departamentos` (`ID_departamento`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -274,7 +250,7 @@ CREATE TABLE `empleados_rrhh` (
 
 LOCK TABLES `empleados_rrhh` WRITE;
 /*!40000 ALTER TABLE `empleados_rrhh` DISABLE KEYS */;
-INSERT INTO `empleados_rrhh` VALUES (1,'juan','ojeda',NULL,NULL,NULL,NULL,NULL,'2025-10-04','empleado');
+INSERT INTO `empleados_rrhh` VALUES (1,'asd','asd','2025-11-18','asd','a34','afaef','2025-11-05','asd',3);
 /*!40000 ALTER TABLE `empleados_rrhh` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -322,8 +298,7 @@ CREATE TABLE `horarios` (
   `Hora_Fin` time DEFAULT NULL,
   `Tipo_Horario` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`ID_Horario`),
-  KEY `ID_Empleado` (`ID_Empleado`),
-  CONSTRAINT `horarios_ibfk_1` FOREIGN KEY (`ID_Empleado`) REFERENCES `empleados_rrhh` (`ID_Empleado`)
+  KEY `ID_Empleado` (`ID_Empleado`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -477,14 +452,14 @@ DROP TABLE IF EXISTS `reclutamiento`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reclutamiento` (
-  `ID_Reclutamiento` int(8) NOT NULL,
+  `ID_Reclutamiento` int(11) NOT NULL AUTO_INCREMENT,
   `Fecha_Solicitud` date DEFAULT NULL,
   `Descripcion_Puesto` varchar(200) DEFAULT NULL,
   `Salario_Ofrecido` decimal(10,2) DEFAULT NULL,
   `Fecha_Cierre` date DEFAULT NULL,
   `Estado_Proceso` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`ID_Reclutamiento`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -493,6 +468,7 @@ CREATE TABLE `reclutamiento` (
 
 LOCK TABLES `reclutamiento` WRITE;
 /*!40000 ALTER TABLE `reclutamiento` DISABLE KEYS */;
+INSERT INTO `reclutamiento` VALUES (1,'2025-11-04','Propuesta de Autoregistro - Puesto: Empleado en Área: RRHH. Usuario: tobi inzunza',100.00,'2025-11-04','Aprobado - Contratad'),(2,'2025-11-04','Propuesta de Autoregistro - Puesto: Empleado en Área: RRHH. Usuario: luchi luchi',100.00,'2025-11-04','Aprobado - Contratad'),(3,'2025-11-04','Propuesta de Autoregistro - Puesto: Empleado en Área: RRHH. Usuario: tobi tobi',99999999.99,'2025-11-04','Aprobado - Contratad');
 /*!40000 ALTER TABLE `reclutamiento` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -699,7 +675,7 @@ CREATE TABLE `usuario` (
   UNIQUE KEY `IdUsuario` (`idUsuario`),
   KEY `id_departamento` (`id_departamento`),
   CONSTRAINT `fk_departamento` FOREIGN KEY (`id_departamento`) REFERENCES `departamentos` (`ID_departamento`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -708,6 +684,7 @@ CREATE TABLE `usuario` (
 
 LOCK TABLES `usuario` WRITE;
 /*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
+INSERT INTO `usuario` VALUES (1,'tobi','inzunza','tobi@gmail.com','cd6f33ab869d39460147064d5c5a72f182f7bb9502ed73f8e239a5a62ff69d42','2025-11-04','Empleado',0,2),(3,'luchi','luchi','luchi@gmail.com','41e907a49caf28996f7c9ac20dc0be626d19664cfd09f77e8494fcf4c34107e4','2025-11-04','Empleado',0,2),(4,'tobi','tobi','tobias@gmail.com','cd6f33ab869d39460147064d5c5a72f182f7bb9502ed73f8e239a5a62ff69d42','2025-11-04','Empleado',1,2);
 /*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -720,4 +697,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-23 17:29:25
+-- Dump completed on 2025-11-06 17:37:50

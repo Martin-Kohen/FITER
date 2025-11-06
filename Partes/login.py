@@ -4,6 +4,14 @@ import subprocess
 import mysql.connector
 import hashlib
 
+
+ID_DEPARTAMENTO_Direccion = 1 
+ID_DEPARTAMENTO_RRHH = 2 
+ID_DEPARTAMENTO_Finanzas = 3 
+ID_DEPARTAMENTO_Marketing = 4 
+ID_DEPARTAMENTO_Servicio_al_cliente = 5
+ID_DEPARTAMENTO_Logistica = 6 
+
 root = Tk()
 root.title('Login')
 root.geometry('1200x500+300+200')
@@ -32,31 +40,54 @@ def signin():
             database="fiter"
         )
         cursor = db.cursor()
-        cursor.execute("SELECT idUsuario, Nombre, Contrasenia, Rol FROM usuario WHERE Mail = %s", (correo,))
+        
+        # MODIFICACIÓN CLAVE: Consultamos ID_Departamento en lugar de Rol
+        # Asegúrate de que la columna ID_Departamento exista en tu tabla 'usuario'.
+        cursor.execute("SELECT idUsuario, Nombre, Contrasenia, ID_Departamento FROM usuario WHERE Mail = %s", (correo,))
         result = cursor.fetchone()
 
         if not result:
             messagebox.showerror("Error", "El usuario no existe.")
             return
 
-        user_id, nombre_usuario, contrasenia_bd, rol = result
+        # Desempaquetado del resultado con ID_Departamento
+        user_id, nombre_usuario, contrasenia_bd, id_departamento = result
 
         if hash_password(contrasena) == contrasenia_bd:
             # Marcar como logueado
             cursor.execute("UPDATE usuario SET logueado = 1 WHERE idUsuario = %s", (user_id,))
             db.commit()
 
-            messagebox.showinfo("Éxito", f"Bienvenido {nombre_usuario}! Rol: {rol}")
+            messagebox.showinfo("Éxito", f"Bienvenido {nombre_usuario}! ID Dept: {id_departamento}")
             root.destroy()
 
-            # Según el rol, abrir la página correspondiente
-            if rol == "Gerente":
+            # --- Lógica de Apertura por ID de Departamento ---
+            # Si el ID_Departamento coincide con el de RR.HH., abrimos el módulo de gerencia (RR.HH.).
+            if id_departamento == ID_DEPARTAMENTO_RRHH:
+                # Módulo de Recursos Humanos (Gerencia)
+                subprocess.Popen(["python", "rrhh.py", nombre_usuario])
+            # Si el ID_Departamento coincide con el de Empleados, abrimos el home general.
+            elif id_departamento == ID_DEPARTAMENTO_Finanzas:
+                # Módulo de Empleados (General)
+                subprocess.Popen(["python", "finanzas.py", nombre_usuario])
+            elif id_departamento == ID_DEPARTAMENTO_Marketing:
+                subprocess.Popen(["python", "marketing.py", nombre_usuario])
+            elif id_departamento == ID_DEPARTAMENTO_Servicio_al_cliente:
+                subprocess.Popen(["python", "servicio_cliente.py", nombre_usuario])
+            elif id_departamento == ID_DEPARTAMENTO_Logistica:
+                subprocess.Popen(["python", "logistica.py", nombre_usuario])
+            elif id_departamento == ID_DEPARTAMENTO_Direccion:
                 subprocess.Popen(["python", "home_gerente.py", nombre_usuario])
-            elif rol == "Empleado":
-                subprocess.Popen(["python", "home.py", nombre_usuario])
-           
+
+            
+            
+            else:
+                # Manejar otros departamentos/roles
+                messagebox.showwarning("Acceso Denegado", "Tu departamento no tiene un módulo de acceso asignado. Cerrando...")
+                
         else:
             messagebox.showerror("Error", "Contraseña incorrecta.")
+            
     except Exception as e:
         messagebox.showerror("Error Inesperado", f"Ocurrió un error: {e}")
     finally:
