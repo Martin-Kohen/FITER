@@ -3,13 +3,11 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import mysql.connector
 from datetime import date
-<<<<<<< HEAD
 import subprocess 
 from tkcalendar import Calendar 
 import time
-=======
 import re 
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
 
 # --- Configuración de la Base de Datos ---
 DB_CONFIG = {
@@ -39,7 +37,7 @@ def conectar_bd():
         messagebox.showerror("Error de Conexión", f"No se pudo conectar a la BD: {err}")
         return None
 
-<<<<<<< HEAD
+
 # ----------------- Funciones Auxiliares para Datos -----------------
 
 def obtener_nombres_departamentos():
@@ -65,11 +63,10 @@ def obtener_nombres_departamentos():
         except mysql.connector.Error as err:
             messagebox.showerror("Error de BD", f"Error al consultar departamentos: {err}")
         finally:
-=======
+
 # ----------------- FUNCIONES AUXILIARES -----------------
 
 def parse_descripcion(descripcion):
-    """Extrae Nombre, Apellido, Puesto y Área de la cadena de descripción."""
     # Ejemplo de cadena: "Propuesta de Autoregistro - Puesto: Empleado en Área: Finanzas. Usuario: Juan Perez"
     
     # 1. Extraer Puesto y Área (que se mapea a Departamento)
@@ -264,13 +261,12 @@ def alta_empleado(parent_window):
         messagebox.showerror("Error de BD", f"Error al insertar el empleado: {err}")
     finally:
         if conn.is_connected():
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
             cursor.close()
             conn.close()
     
     return departamentos_nombres
 
-<<<<<<< HEAD
+
 # ----------------------------------------------------
 # --- FUNCIÓN AUXILIAR DE CALENDARIO (CORRECCIÓN READONLY) ---
 # ----------------------------------------------------
@@ -563,8 +559,6 @@ def alta_empleado(parent_window):
     """Función de enlace: abre el formulario de alta."""
     formulario_alta_empleado(parent_window)
 
-=======
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
 def baja_empleado(parent_window):
     """Flujo: Dar de baja un empleado y su usuario asociado."""
     id_a_borrar = simpledialog.askinteger("Baja Empleado", "Ingresa el ID del empleado a dar de baja:", parent=parent_window)
@@ -599,11 +593,11 @@ def baja_empleado(parent_window):
                 conn.close()
 
 def modificar_empleado(parent_window):
-<<<<<<< HEAD
+
     """Flujo: ¿Desea modificar datos? -> Seleccionar -> Modificar Puesto"""
-=======
+
     """Flujo: Modificar Puesto de Empleado"""
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
     id_modificar = simpledialog.askinteger("Modificar Empleado", "Ingresa el ID del empleado a modificar:", parent=parent_window)
     if id_modificar is None: return
 
@@ -656,7 +650,7 @@ def ver_lista_empleados():
     if conn:
         cursor = conn.cursor()
         try:
-<<<<<<< HEAD
+
             # SQL ADAPTADO: LEFT JOIN para obtener el nombre del departamento
             sql_query = """
                 SELECT E.ID_Empleado, E.Nombre, E.Apellido, E.Puesto, D.Nombre, E.Fecha_Contratacion
@@ -668,7 +662,7 @@ def ver_lista_empleados():
             
             header = "ID | Nombre | Apellido | Puesto | Departamento | Contratación"
             Label(top, text=header, bg="#ffffff", fg="#000000", font=("Arial", 12, "bold")).pack(fill=X, padx=10, pady=5)
-=======
+
             # Seleccionamos las columnas directamente de Empleados_RRHH
             sql_select = """
             SELECT 
@@ -692,7 +686,7 @@ def ver_lista_empleados():
             Label(header, text="Puesto", bg="#ffffff", font=("Arial", 10, "bold"), width=20).pack(side=LEFT, padx=5)
             Label(header, text="Departamento", bg="#ffffff", font=("Arial", 10, "bold"), width=20).pack(side=LEFT, padx=5)
             Label(header, text="Contratación", bg="#ffffff", font=("Arial", 10, "bold"), width=15).pack(side=LEFT, padx=5)
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
 
             if empleados:
                 canvas = Canvas(top, bg="#1dc1dd")
@@ -713,7 +707,7 @@ def ver_lista_empleados():
                 scrollbar.pack(side="right", fill="y")
                 
                 for emp in empleados:
-<<<<<<< HEAD
+
                     id_emp, nombre, apellido, puesto, nombre_depto, fecha_contratacion = emp
                     
                     nombre_depto_display = nombre_depto if nombre_depto else "Sin Asignar"
@@ -722,7 +716,7 @@ def ver_lista_empleados():
                     emp_str = f"{id_emp} | {nombre} | {apellido} | {puesto} | {nombre_depto_display} | {fecha_contratacion_str}"
                     Label(top, text=emp_str, bg="#f0f0ff", fg="black",
                           font=("Arial", 10), anchor="w").pack(fill=X, padx=10, pady=1)
-=======
+
                     id_emp, nombre, apellido, puesto, depto_nombre, fecha_contratacion = emp
                     
                     fecha_contratacion_str = fecha_contratacion.strftime("%Y-%m-%d") if isinstance(fecha_contratacion, date) else str(fecha_contratacion)
@@ -736,7 +730,7 @@ def ver_lista_empleados():
                     Label(row_frame, text=puesto, bg="#f0f0ff", font=("Arial", 10), width=20).pack(side=LEFT, padx=5)
                     Label(row_frame, text=depto_nombre or "N/A", bg="#f0f0ff", font=("Arial", 10), width=20).pack(side=LEFT, padx=5)
                     Label(row_frame, text=fecha_contratacion_str, bg="#f0f0ff", font=("Arial", 10), width=15).pack(side=LEFT, padx=5)
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
             else:
                 Label(top, text="No hay empleados registrados.", bg="#ffffff", fg="black", font=("Arial", 12)).pack(padx=10, pady=10)
 
@@ -867,7 +861,7 @@ def actualizar_maestros():
 # --- Función Principal de la Ventana de RR.HH. ---
 
 def abrir_rrhh(parent_window, nombre_usuario):
-<<<<<<< HEAD
+
     
     root = Toplevel()
     root.title(f"Recursos Humanos - Usuario: {nombre_usuario}")
@@ -877,9 +871,9 @@ def abrir_rrhh(parent_window, nombre_usuario):
     parent_window.withdraw()
 
     def cerrar_sesion():
-=======
-    if parent_window.winfo_exists():
-        parent_window.withdraw() 
+
+        if parent_window.winfo_exists():
+            parent_window.withdraw() 
 
     root = Toplevel()
     root.title(f"Recursos Humanos - Usuario: {nombre_usuario}")
@@ -888,7 +882,7 @@ def abrir_rrhh(parent_window, nombre_usuario):
 
     # --- Función para volver al home ---
     def volver_home():
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
         global lista_empleados_window, lista_candidatos_window
         if lista_empleados_window and lista_empleados_window.winfo_exists():
             lista_empleados_window.destroy()
@@ -906,7 +900,7 @@ def abrir_rrhh(parent_window, nombre_usuario):
         
     root.protocol("WM_DELETE_WINDOW", cerrar_sesion)
 
-<<<<<<< HEAD
+
 
     # --- Contenedores ---
     frame_top = Frame(root, bg="#1dc1dd")
@@ -914,14 +908,14 @@ def abrir_rrhh(parent_window, nombre_usuario):
     
     Button(frame_top, text="❌ Cerrar Sesión", bg="#ff4d4d", fg="white",
            font=("Arial", 12, "bold"), command=cerrar_sesion).pack(pady=5, padx=20, fill=X)
-=======
+
     # --- Contenedores y Botones ---
     frame_top = Frame(root, bg="#1dc1dd")
     frame_top.pack(pady=10, fill=X)
     
     Button(frame_top, text="← Volver al Home", bg="#ff4d4d", fg="white",
            font=("Arial", 12, "bold"), command=volver_home).pack(pady=5, padx=20, fill=X)
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
     
     Label(frame_top, text="Módulo de Recursos Humanos (RR.HH.)", bg="#1dc1dd", fg="white",
                font=("Arial", 18, "bold")).pack(pady=10)
@@ -964,7 +958,7 @@ def abrir_rrhh(parent_window, nombre_usuario):
 
     root.mainloop()
 
-<<<<<<< HEAD
+
 # ----------------- INICIO DEL PROGRAMA -----------------
 if __name__ == '__main__':
     # Creamos la ventana principal (Root) de Tkinter. Es esencial para el mainloop.
@@ -976,12 +970,12 @@ if __name__ == '__main__':
     abrir_rrhh(main_root, "Gerente RRHH")
     
     # El mainloop se mantiene hasta que cerrar_sesion lo termine.
-=======
+
 # ----------------- EJECUCIÓN -----------------
 if __name__ == '__main__':
     main_root = Tk()
     main_root.title("Simulación de Home Oculto")
     main_root.withdraw()
     abrir_rrhh(main_root, "Gerente RRHH")
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
     main_root.mainloop()

@@ -4,8 +4,6 @@ from tkinter import simpledialog
 import mysql.connector
 from datetime import date
 import re 
-# IMPORTACIÓN CLAVE: Módulo de Login
-# Esto requiere que tu login.py tenga la función 'abrir_login(root)'
 try:
     import login 
 except ImportError:

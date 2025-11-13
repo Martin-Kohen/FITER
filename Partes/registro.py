@@ -39,7 +39,6 @@ def conectar_bd():
         conn = mysql.connector.connect(**DB_CONFIG)
         return conn
     except mysql.connector.Error as err:
-        # Aquí no mostramos error crítico si es solo al inicio, lo manejamos en get_areas_from_db
         return None
 
 def get_areas_from_db():
@@ -71,49 +70,25 @@ def get_areas_from_db():
         
     return areas_nombres
 
-def recargar_areas():
-    """Recarga la lista de áreas disponibles y actualiza el OptionMenu."""
-    global areas_disponibles
-    # Obtener la nueva lista de áreas de la BD
-    nuevas_areas = get_areas_from_db()
+# --- NUEVA FUNCIÓN PARA MANEJAR EL CAMBIO DE ROL ---
+def handle_rol_change(*args):
+    """Muestra u oculta el menú de Área y el botón de recarga basándose en el Rol seleccionado."""
     
-    # 1. Quitar el OptionMenu anterior
-    global area_menu 
-    area_menu.destroy()
+    global area_menu, reload_button
     
-    # 2. Crear un nuevo OptionMenu con las opciones actualizadas
-    areas_disponibles = nuevas_areas
-    area_var.set("Seleccionar Área") # Resetear selección
-
-    # Recrea el OptionMenu con las nuevas opciones. Se usa un * para desempaquetar la lista.
-    area_menu = OptionMenu(frame, area_var, *areas_disponibles)
-    area_menu.config(width=14, font=('Billie DEMO Light', 11), bg="white", fg="black")
-    area_menu.place(x=200, y=y_start+5*y_gap)
-    
-    if "Error al cargar" in areas_disponibles[0] if areas_disponibles else "":
-         messagebox.showwarning("Recarga", "No se pudo conectar a la base de datos o cargar las áreas.")
+    if rol_var.get() == "Gerente":
+        # Ocultar menú de Área y botón de recarga
+        area_menu.place_forget()
+        reload_button.place_forget()
+        area_var.set("Gerente (Todos)") # Establecer un valor por defecto que no cause error.
     else:
-        messagebox.showinfo("Recarga", "Áreas recargadas exitosamente.")
+        # Mostrar menú de Área y botón de recarga
+        area_menu.place(x=200, y=y_start+5*y_gap)
+        reload_button.place(x=370, y=y_start+5*y_gap)
+        if area_var.get() == "Gerente (Todos)":
+             area_var.set("Seleccionar Área") # Resetear a la selección original
+# ----------------------------------------------------
         
-def insertar_propuesta_reclutamiento(cursor, nombre, apellido, rol, area_nombre):
-    """Inserta una nueva propuesta de trabajo en la tabla 'reclutamiento'."""
-    try:
-        descripcion = f"Propuesta de Autoregistro - Puesto: {rol} en Área: {area_nombre}. Usuario: {nombre} {apellido}"
-        fecha_solicitud = datetime.now().strftime('%Y-%m-%d')
-        
-        sql_insert = """
-        INSERT INTO reclutamiento 
-        (Fecha_Solicitud, Descripcion_Puesto, Salario_Ofrecido, Estado_Proceso) 
-        VALUES (%s, %s, %s, %s)
-        """
-        # Salario_Ofrecido se deja como NULL y Estado_Proceso como 'Pendiente RRHH'
-        cursor.execute(sql_insert, (fecha_solicitud, descripcion, None, 'Pendiente RRHH'))
-        
-        return True
-    except mysql.connector.Error as err:
-        messagebox.showerror("Error de BD", f"Error al crear propuesta de reclutamiento: {err}")
-        return False
-
 # --- Cargar las áreas al inicio ---
 areas_disponibles = get_areas_from_db()
 
@@ -124,13 +99,16 @@ def registro():
     fecha_nac = fecha_var.get()
     contrasena = code.get()
     rol = rol_var.get()
-    area_nombre = area_var.get()
+    area_nombre = area_var.get() # Puede ser "Gerente (Todos)" o un nombre de área real
 
     # 1. Validación de campos inicial
+    # Validamos el área solo si el rol NO es Gerente, o si es Gerente y el placeholder sigue ahí
     if correo in ('', 'Correo Electronico') or nombre_usuario in ('', 'Nombre') or \
        apellido_usuario in ('', 'Apellido') or fecha_nac in ('', 'Fecha de Nacimiento') or \
-       contrasena in ('', 'Contraseña') or rol == "Seleccionar Rol" or area_nombre == "Seleccionar Área" or "Error al cargar" in area_nombre:
-        messagebox.showerror('Error', 'Por favor, complete todos los campos y seleccione un Área válida.')
+       contrasena in ('', 'Contraseña') or rol == "Seleccionar Rol" or \
+       (rol != "Gerente" and (area_nombre == "Seleccionar Área" or "Error al cargar" in area_nombre)):
+        
+        messagebox.showerror('Error', 'Por favor, complete todos los campos y seleccione un Área válida (o seleccione Gerente).')
         return
 
     if not validar_correo(correo):
@@ -144,11 +122,31 @@ def registro():
         return
 
     # OBTENER EL ID DEL DEPARTAMENTO
-    id_departamento_seleccionado = DEPARTAMENTOS_MAP.get(area_nombre)
-    if id_departamento_seleccionado is None:
-          messagebox.showerror('Error', 'ID de Departamento no encontrado. Intente recargar.')
-          return
-          
+    # Gerente: Usamos 0 o NULL para representar "todos" o "sin departamento específico"
+    # IMPORTANTE: Debes asegurarte que tu columna ID_Departamento en 'usuario' acepte NULL o que 0 sea un ID válido para Gerente.
+    if rol == "Gerente":
+        id_departamento_seleccionado = 0 # Usamos 0 como un ID genérico para Gerentes
+        area_nombre_busqueda = "Todos" # Usamos un nombre genérico para la búsqueda
+        
+        # VALIDACIÓN EXTRA: Si el rol es Gerente, deberías tener un registro en empleados_rrhh
+        # que NO use ID_Departamento para la validación, o que use 0.
+        # Para simplificar y mantener el flujo, buscaremos sin el ID de departamento.
+        sql_rrhh = "SELECT ID_Empleado FROM empleados_rrhh WHERE Nombre = %s AND Apellido = %s AND Puesto = %s"
+        empleado_params = (nombre_usuario, apellido_usuario, rol)
+
+    else:
+        # Empleado: Usamos el mapeo normal
+        id_departamento_seleccionado = DEPARTAMENTOS_MAP.get(area_nombre)
+        area_nombre_busqueda = area_nombre
+        if id_departamento_seleccionado is None:
+              messagebox.showerror('Error', 'ID de Departamento no encontrado. Intente recargar.')
+              return
+        
+        # Consulta normal con ID_Departamento
+        sql_rrhh = "SELECT ID_Empleado FROM empleados_rrhh WHERE Nombre = %s AND Apellido = %s AND Puesto = %s AND ID_Departamento = %s"
+        empleado_params = (nombre_usuario, apellido_usuario, rol, id_departamento_seleccionado)
+
+
     db = conectar_bd()
     if not db: 
         messagebox.showerror('Error', 'No se pudo conectar a la base de datos.')
@@ -158,32 +156,25 @@ def registro():
     id_empleado = None
 
     try:
-        # --- 2. VALIDACIÓN CRÍTICA CONTRA RR.HH. (Empleados_RRHH) ---
-        # Se verifica si el usuario existe como empleado de alta en RR.HH.
-        sql_rrhh = "SELECT ID_Empleado FROM Empleados_RRHH WHERE Nombre = %s AND Apellido = %s AND Puesto = %s AND Departamento = %s"
-        cursor.execute(sql_rrhh, (nombre_usuario, apellido_usuario, rol, area_nombre))
+        # --- 2. VALIDACIÓN CRÍTICA CONTRA RR.HH. (empleados_rrhh) ---
+        cursor.execute(sql_rrhh, empleado_params)
         empleado_data = cursor.fetchone()
 
         if not empleado_data:
-            # --- MODIFICACIÓN CLAVE: NO ENCONTRADO EN RRHH, CREAR PROPUESTA ---
-            if insertar_propuesta_reclutamiento(cursor, nombre_usuario, apellido_usuario, rol, area_nombre):
-                db.commit() # Confirmar la inserción en reclutamiento
-                messagebox.showwarning('Propuesta Enviada 📧', 
-                                         f'El usuario {nombre_usuario} {apellido_usuario} no está en RR.HH.!\n'
-                                         'Se ha generado una **Propuesta de Trabajo** para que RR.HH. la revise. No se creó la cuenta.')
-            return # Termina la función aquí, no hay cuenta de usuario
-            # --- FIN MODIFICACIÓN ---
+            messagebox.showerror('Error de RR.HH.', 
+                                 f'El usuario {nombre_usuario} {apellido_usuario} (Rol: {rol}) no está registrado en RR.HH.\n'
+                                 'No se puede crear la cuenta de usuario.')
+            return
 
         id_empleado = empleado_data[0] # Si existe, tomamos el ID
 
         # --- 3. VALIDACIÓN DE DUPLICADOS EN USUARIO ---
-        # Validación por Correo
+        # (código para verificar correo y idUsuario)
         cursor.execute("SELECT Mail FROM usuario WHERE Mail = %s", (correo,))
         if cursor.fetchone():
             messagebox.showerror('Error', 'El correo ya existe.')
             return
 
-        # Validación por ID de Empleado (idUsuario)
         cursor.execute("SELECT idUsuario FROM usuario WHERE idUsuario = %s", (id_empleado,))
         if cursor.fetchone():
             messagebox.showerror('Error', 'Ya existe una cuenta para este ID de empleado. Inicie sesión.')
@@ -196,6 +187,7 @@ def registro():
                              (idUsuario, Nombre, Apellido, Mail, Contrasenia, Fecha_de_nacimiento, Rol, id_departamento, logueado)
                              VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
                              
+        # Si es Gerente, insertamos 0 en id_departamento_seleccionado
         cursor.execute(sql_insert,
                         (id_empleado, nombre_usuario, apellido_usuario, correo, hashed_pass, fecha_obj, rol, id_departamento_seleccionado, 0))
         db.commit()
@@ -203,7 +195,7 @@ def registro():
 
         # Limpiar campos y navegar
         for e, placeholder in zip([user, nombre, apellido, fecha_entry, code],
-                                 ['Correo Electronico','Nombre','Apellido','Fecha de Nacimiento','Contraseña']):
+                                  ['Correo Electronico','Nombre','Apellido','Fecha de Nacimiento','Contraseña']):
             e.delete(0, 'end')
             e.insert(0, placeholder)
             if placeholder == 'Contraseña':
@@ -323,21 +315,18 @@ rol_var.set("Seleccionar Rol")
 rol_menu = OptionMenu(frame, rol_var, "Gerente", "Empleado")
 rol_menu.config(width=14, font=('Billie DEMO Light', 11), bg="white", fg="black")
 rol_menu.place(x=30, y=y_start+5*y_gap) 
+# --- RASTREAR EL CAMBIO DE ROL ---
+rol_var.trace("w", handle_rol_change)
+# ---------------------------------
 
 # Menú Área (Cargado dinámicamente)
 area_var = StringVar()
 area_var.set("Seleccionar Área")
 
-# Inicialización del OptionMenu (puede contener "Error al cargar" al inicio)
+# Inicialización del OptionMenu 
 area_menu = OptionMenu(frame, area_var, *areas_disponibles)
 area_menu.config(width=14, font=('Billie DEMO Light', 11), bg="white", fg="black")
 area_menu.place(x=200, y=y_start+5*y_gap) 
-
-# Botón para Recargar Áreas 🔄
-reload_button = Button(frame, text='🔄', command=recargar_areas, 
-                       font=('Billie DEMO Light', 10, 'bold'), width=2, height=1,
-                       bg="#0089a1", fg="#ffffff", cursor='hand2', border=0)
-reload_button.place(x=370, y=y_start+5*y_gap) 
 
 # --- Botones ---
 label = Label(frame, text="¿Tienes cuenta?", fg='white', bg="#1dc1dd", font=('Billie DEMO Light', 11, 'bold'))
