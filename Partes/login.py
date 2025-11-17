@@ -3,9 +3,9 @@ from tkinter import messagebox
 import subprocess
 import mysql.connector
 import hashlib
+import sys
 
-<<<<<<< HEAD
-
+# --- Constantes de Departamento ---
 ID_DEPARTAMENTO_Direccion = 1 
 ID_DEPARTAMENTO_RRHH = 2 
 ID_DEPARTAMENTO_Finanzas = 3 
@@ -13,96 +13,35 @@ ID_DEPARTAMENTO_Marketing = 4
 ID_DEPARTAMENTO_Servicio_al_cliente = 5
 ID_DEPARTAMENTO_Logistica = 6 
 
-root = Tk()
-root.title('Login')
-root.geometry('1200x500+300+200')
-root.configure(bg="#1dc1dd")
-root.resizable(False, False)
+# --- Variables Globales para las Entradas ---
+# Se inicializan como None y se asignan en abrir_login
+user = None 
+code = None
 
-=======
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
+
 # --- Función para hashear la contraseña ---
 def hash_password(password):
+    """Retorna el hash SHA256 de la contraseña."""
     return hashlib.sha256(password.encode()).hexdigest()
 
-<<<<<<< HEAD
-# --- Función de inicio de sesión ---
-def signin():
-    correo = user.get().strip()
-    contrasena = code.get()
-
-    if correo in ("", "Correo Electronico") or contrasena in ("", "Contraseña"):
-        messagebox.showerror("Error", "Por favor, complete todos los campos.")
-        return
-
-    db = None
+# --- Función Auxiliar para la Conexión ---
+def conectar_bd():
+    """Establece y devuelve una conexión a la base de datos."""
     try:
-        db = mysql.connector.connect(
+        conn = mysql.connector.connect(
             host="localhost",
             user="root",
             password="",
             database="fiter"
         )
-        cursor = db.cursor()
-        
-        # MODIFICACIÓN CLAVE: Consultamos ID_Departamento en lugar de Rol
-        # Asegúrate de que la columna ID_Departamento exista en tu tabla 'usuario'.
-        cursor.execute("SELECT idUsuario, Nombre, Contrasenia, ID_Departamento FROM usuario WHERE Mail = %s", (correo,))
-        result = cursor.fetchone()
+        return conn
+    except mysql.connector.Error as err:
+        messagebox.showerror("Error de Conexión", f"No se pudo conectar a la BD: {err}")
+        return None
 
-        if not result:
-            messagebox.showerror("Error", "El usuario no existe.")
-            return
-
-        # Desempaquetado del resultado con ID_Departamento
-        user_id, nombre_usuario, contrasenia_bd, id_departamento = result
-
-        if hash_password(contrasena) == contrasenia_bd:
-            # Marcar como logueado
-            cursor.execute("UPDATE usuario SET logueado = 1 WHERE idUsuario = %s", (user_id,))
-            db.commit()
-
-            messagebox.showinfo("Éxito", f"Bienvenido {nombre_usuario}! ID Dept: {id_departamento}")
-            root.destroy()
-
-            # --- Lógica de Apertura por ID de Departamento ---
-            # Si el ID_Departamento coincide con el de RR.HH., abrimos el módulo de gerencia (RR.HH.).
-            if id_departamento == ID_DEPARTAMENTO_RRHH:
-                # Módulo de Recursos Humanos (Gerencia)
-                subprocess.Popen(["python", "rrhh.py", nombre_usuario])
-            # Si el ID_Departamento coincide con el de Empleados, abrimos el home general.
-            elif id_departamento == ID_DEPARTAMENTO_Finanzas:
-                # Módulo de Empleados (General)
-                subprocess.Popen(["python", "finanzas.py", nombre_usuario])
-            elif id_departamento == ID_DEPARTAMENTO_Marketing:
-                subprocess.Popen(["python", "marketing.py", nombre_usuario])
-            elif id_departamento == ID_DEPARTAMENTO_Servicio_al_cliente:
-                subprocess.Popen(["python", "servicio_cliente.py", nombre_usuario])
-            elif id_departamento == ID_DEPARTAMENTO_Logistica:
-                subprocess.Popen(["python", "logistica.py", nombre_usuario])
-            elif id_departamento == ID_DEPARTAMENTO_Direccion:
-                subprocess.Popen(["python", "home_gerente.py", nombre_usuario])
-
-            
-            
-            else:
-                # Manejar otros departamentos/roles
-                messagebox.showwarning("Acceso Denegado", "Tu departamento no tiene un módulo de acceso asignado. Cerrando...")
-                
-        else:
-            messagebox.showerror("Error", "Contraseña incorrecta.")
-            
-    except Exception as e:
-        messagebox.showerror("Error Inesperado", f"Ocurrió un error: {e}")
-    finally:
-        if db and db.is_connected():
-            cursor.close()
-            db.close()
-
-=======
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
 # --- Función para crear entradas con placeholder ---
 def crear_entry(frame, placeholder, y, show=None):
+    """Crea un campo de entrada (Entry) con lógica de placeholder."""
     entry = Entry(frame, width=35, fg='black', border=0, bg='white',
                   font=('Billie DEMO Light', 11), show=show)
     entry.place(x=30, y=y)
@@ -125,116 +64,140 @@ def crear_entry(frame, placeholder, y, show=None):
     return entry
 
 
-# =======================================================
-# 🔑 FUNCIÓN PRINCIPAL DE LOGIN (Expuesta para otros módulos)
-# =======================================================
-def abrir_login(root):
-    """
-    Función que inicia la interfaz de login. Es llamada por:
-    1. El bloque __main__ de este archivo (al inicio).
-    2. Otros módulos (como RR.HH.) al cerrar sesión.
-    """
+# ---------------------------------------------------
+# --- Lógica de Inicio de Sesión y Redirección ---
+# ---------------------------------------------------
+
+def _handle_signin(root_window):
+    """Maneja el inicio de sesión, autenticación y redirección."""
+    global user, code
     
-    # Si la ventana principal estaba oculta (por otro módulo), la volvemos a mostrar
-    if not root.winfo_ismapped():
-        root.deiconify() 
+    # Verificación de Entradas (se usa la variable global asignada en abrir_login)
+    correo = user.get().strip()
+    contrasena = code.get()
+
+    if correo in ("", "Correo Electronico") or contrasena in ("", "Contraseña"):
+        messagebox.showerror("Error", "Por favor, complete todos los campos.")
+        return
+
+    db = conectar_bd()
+    if not db: 
+        return
     
-    # Limpiar cualquier widget anterior (útil al regresar de RR.HH.)
-    for widget in root.winfo_children():
-        widget.destroy()
+    cursor = db.cursor()
 
-    root.title('Login')
-    root.geometry('1200x500+300+200')
-    root.configure(bg="#1dc1dd")
-    root.resizable(False, False)
+    try:
+        # CONSULTA CLAVE: Selecciona todos los datos necesarios para la autenticación y la redirección.
+        sql_query = "SELECT idUsuario, Nombre, Contrasenia, Rol, ID_Departamento FROM usuario WHERE Mail = %s"
+        # Asegúrate de que las columnas Rol y ID_Departamento existan en tu tabla 'usuario'.
+        cursor.execute(sql_query, (correo,))
+        result = cursor.fetchone()
 
-    # --- Función interna de inicio de sesión (CORREGIDA) ---
-    def signin():
-        correo = user.get().strip()
-        contrasena = code.get()
-
-        if correo in ("", "Correo Electronico") or contrasena in ("", "Contraseña"):
-            messagebox.showerror("Error", "Por favor, complete todos los campos.")
+        if not result:
+            messagebox.showerror("Error", "El usuario no existe.")
             return
 
-        db = None
-        try:
-            db = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="fiter"
-            )
-            cursor = db.cursor()
+        # Desempaquetado del resultado (asumiendo 5 columnas)
+        user_id, nombre_usuario, contrasenia_bd, rol, id_departamento = result
+
+        if hash_password(contrasena) == contrasenia_bd:
+            # Autenticación exitosa
             
-            # CONSULTA MODIFICADA: Ahora se selecciona 'id_departamento'
-            sql_query = "SELECT idUsuario, Nombre, Contrasenia, Rol, id_departamento FROM usuario WHERE Mail = %s"
-            cursor.execute(sql_query, (correo,))
-            result = cursor.fetchone()
+            # 1. Marcar como logueado
+            cursor.execute("UPDATE usuario SET logueado = 1 WHERE idUsuario = %s", (user_id,))
+            db.commit()
 
-            if not result:
-                messagebox.showerror("Error", "El usuario no existe.")
-                return
+            messagebox.showinfo("Éxito", f"Bienvenido {nombre_usuario}! Rol: {rol} (Depto ID: {id_departamento})")
+            root_window.destroy() # Cierra la ventana de login
+            
+            # 2. LÓGICA DE REDIRECCIÓN BASADA EN ROL Y ID_DEPARTAMENTO
+            
+            # Nota: Los scripts deben existir en el mismo directorio.
+            # Los argumentos se pasan como una lista.
 
-<<<<<<< HEAD
-root.mainloop()
-=======
-            # DESEMPAQUETADO MODIFICADO: Se incluye la nueva columna
-            user_id, nombre_usuario, contrasenia_bd, rol, id_departamento = result
-
-            if hash_password(contrasena) == contrasenia_bd:
-                # Marcar como logueado
-                cursor.execute("UPDATE usuario SET logueado = 1 WHERE idUsuario = %s", (user_id,))
-                db.commit()
-
-                messagebox.showinfo("Éxito", f"Bienvenido {nombre_usuario}! Rol: {rol} (Depto ID: {id_departamento})")
-                root.destroy() # Cierra la ventana principal
-
-                # -----------------------------------------------------------------
-                # LÓGICA DE REDIRECCIÓN BASADA EN ROL Y ID_DEPARTAMENTO
-                # -----------------------------------------------------------------
-                
-                # 1. Gerente (Excepción por Rol)
-                if rol == "Gerente":
-                    subprocess.Popen(["python", "home_gerente.py", nombre_usuario])
-                
-                # 2. RRHH (id_departamento == 2)
-                elif id_departamento == 2:
-                    subprocess.Popen(["python", "rrhh_empleado.py", nombre_usuario])
-                
-                # 3. Otros Departamentos (id_departamento != 2 y no Gerente)
-                elif id_departamento is not None:
-                    subprocess.Popen(["python", "home.py", nombre_usuario])
-                
-                # 4. Fallback (si el usuario no tiene departamento o es un rol no manejado)
-                else:
-                    messagebox.showerror("Error de Asignación", 
-                                         f"El usuario tiene un rol ({rol}) o departamento ({id_departamento}) sin ventana de inicio asignada.")
-                
+            target_script = None
+            
+            if rol == "Gerente":
+                # Redirección de Gerentes (alta prioridad por Rol)
+                target_script = "home_gerente.py"
+            elif id_departamento == ID_DEPARTAMENTO_RRHH:
+                # Módulo de Recursos Humanos (Empleado/General)
+                target_script = "rrhh_empleado.py"
+            elif id_departamento == ID_DEPARTAMENTO_Finanzas:
+                target_script = "finanzas.py"
+            elif id_departamento == ID_DEPARTAMENTO_Marketing:
+                target_script = "marketing.py"
+            elif id_departamento == ID_DEPARTAMENTO_Servicio_al_cliente:
+                target_script = "servicio_cliente.py"
+            elif id_departamento == ID_DEPARTAMENTO_Logistica:
+                target_script = "logistica.py"
+            elif id_departamento == ID_DEPARTAMENTO_Direccion:
+                # Si Dirección no es Gerente, puede tener su propio home
+                target_script = "home_direccion.py" 
             else:
-                messagebox.showerror("Error", "Contraseña incorrecta.")
-        except Exception as e:
-            messagebox.showerror("Error Inesperado", f"Ocurrió un error: {e}")
-        finally:
-            if db and db.is_connected():
-                cursor.close()
-                db.close()
+                # Fallback para empleados sin roles específicos pero con departamento
+                if id_departamento is not None:
+                     target_script = "home.py"
+
+            if target_script:
+                # Ejecuta el módulo correspondiente
+                subprocess.Popen([sys.executable, target_script, nombre_usuario])
+            else:
+                messagebox.showerror("Error de Asignación", 
+                                     f"El usuario tiene un rol ({rol}) o departamento ({id_departamento}) sin ventana de inicio asignada.")
+
+        else:
+            messagebox.showerror("Error", "Contraseña incorrecta.")
+    except mysql.connector.Error as err:
+        messagebox.showerror("Error de BD", f"Error durante el inicio de sesión: {err}")
+    except Exception as e:
+        messagebox.showerror("Error Inesperado", f"Ocurrió un error: {e}")
+    finally:
+        if db and db.is_connected():
+            cursor.close()
+            db.close()
+
+
+# ---------------------------------------------------
+# --- Ventana Principal de Login ---
+# ---------------------------------------------------
+
+def abrir_login(root_window):
+    """
+    Función que configura e inicia la interfaz de login. 
+    Limpia la ventana principal si se regresa de otra ventana.
+    """
+    global user, code
+    
+    # Si la ventana principal estaba oculta (por otro módulo), la volvemos a mostrar
+    if not root_window.winfo_ismapped():
+        root_window.deiconify() 
+    
+    # Limpiar cualquier widget anterior (útil al regresar de RR.HH.)
+    for widget in root_window.winfo_children():
+        widget.destroy()
+
+    root_window.title('Login')
+    root_window.geometry('1200x500+300+200')
+    root_window.configure(bg="#1dc1dd")
+    root_window.resizable(False, False)
 
     # --- Interfaz ---
-    frame = Frame(root, width=500, height=500, bg="#1dc1dd")
+    frame = Frame(root_window, width=500, height=500, bg="#1dc1dd")
     frame.place(x=480, y=70)
 
     heading = Label(frame, text='Iniciar sesión', fg='white', bg='#1dc1dd',
                     font=('Billie DEMO Light', 23, 'bold'))
     heading.place(x=87, y=5)
 
-    global user, code
+    # Asignación de variables globales de Entrada
     user = crear_entry(frame, "Correo Electronico", 60)
     code = crear_entry(frame, "Contraseña", 120, show="")
 
     def abrir_registro():
-        root.destroy()
-        subprocess.Popen(["python", "registro.py"])
+        root_window.destroy()
+        # Nota: Usamos sys.executable para mayor compatibilidad
+        subprocess.Popen([sys.executable, "registro.py"])
 
     label = Label(frame, text="¿No tenés cuenta?", fg='white', bg="#1dc1dd",
                   font=('Billie DEMO Light', 11, 'bold'))
@@ -244,8 +207,9 @@ root.mainloop()
                      cursor='hand2', fg="#ffffff", command=abrir_registro)
     sign_up.place(x=215, y=180)
 
+    # El botón llama a la función de manejo de inicio de sesión
     enter = Button(frame, width=10, text='Entrar', border=0, bg="#0089a1",
-                   cursor='hand2', fg="#ffffff", command=signin)
+                   cursor='hand2', fg="#ffffff", command=lambda: _handle_signin(root_window))
     enter.place(x=130, y=220)
 
 
@@ -256,4 +220,3 @@ if __name__ == '__main__':
     main_root = Tk()
     abrir_login(main_root)
     main_root.mainloop()
->>>>>>> b7174a9f43566d5b485e37b09510a240863032ef
