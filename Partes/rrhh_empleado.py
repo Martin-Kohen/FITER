@@ -7,8 +7,8 @@ import re
 from tkcalendar import DateEntry 
 import random
 import string
-import sys # Necesario para la redirección
-import subprocess # Necesario para cerrar sesión
+import sys 
+import subprocess 
 
 try:
     from login import hash_password 
@@ -43,7 +43,6 @@ def generar_password_temporal():
     return ''.join(random.choice(caracteres) for i in range(8))
     
 def obtener_departamentos(excluir_direccion=False):
-    # ... (código igual) ...
     conn = conectar_bd()
     if not conn: return []
     cursor = conn.cursor()
@@ -130,7 +129,7 @@ def aprobar_propuesta_reclutamiento(id_reclutamiento, parent_window):
         nuevo_id_empleado = cursor.lastrowid 
 
         password_generada = generar_password_temporal() 
-        password_hasheada = hash_password(password_generada) # ✅ Hasheo de la contraseña
+        password_hasheada = hash_password(password_generada) 
         rol_usuario = 'Empleado' if puesto != 'Gerente' else 'Gerente'
         id_depto_usuario = obtener_id_departamento_por_nombre(area)
         
@@ -144,7 +143,6 @@ def aprobar_propuesta_reclutamiento(id_reclutamiento, parent_window):
         estado_cierre = "Aprobado y Contratado"
         cursor.execute(sql_update_reclutamiento, (estado_cierre, salario, fecha_contratacion, nuevo_id_empleado, id_reclutamiento))
 
-        # 4. Insertar en Contratacion
         sql_insert_contratacion = """INSERT INTO Contratacion (ID_Empleado, Salario, Tipo_Contrato, Fecha_Contrato) 
                                       VALUES (%s, %s, %s, %s)"""
         tipo_contrato = "Fijo" 
@@ -233,7 +231,7 @@ def solicitar_datos_alta(parent_window, callback):
     Entry(Frame_telefono, textvariable=telefono_var, width=25).pack(side=RIGHT, padx=5, fill=X, expand=True)
     
     Frame_email = Frame(scrollable_frame); Frame_email.pack(pady=5, padx=20, fill=X)
-    Label(Frame_email, text="Email (LOGIN):").pack(side=LEFT, padx=5)
+    Label(Frame_email, text="Email:").pack(side=LEFT, padx=5)
     Entry(Frame_email, textvariable=email_var, width=25).pack(side=RIGHT, padx=5, fill=X, expand=True)
     
     Frame_contrasenia = Frame(scrollable_frame); Frame_contrasenia.pack(pady=5, padx=20, fill=X)
@@ -357,7 +355,7 @@ def alta_empleado(parent_window):
                 nombre, 
                 apellido, 
                 email, 
-                contrasenia_hasheada, # Usar el hash para guardar
+                contrasenia_hasheada, 
                 fecha_nacimiento, 
                 rol_usuario, 
                 0, 
@@ -382,7 +380,6 @@ def alta_empleado(parent_window):
     solicitar_datos_alta(parent_window, procesar_alta)
     
 def baja_empleado(parent_window):
-    # ... (código igual) ...
     id_a_borrar = simpledialog.askinteger("Baja Empleado", "Ingresa el ID del empleado a dar de baja:", parent=parent_window)
     if id_a_borrar is None: return
     confirm = messagebox.askyesno("Confirmar Baja", f"¿Estás seguro de dar de BAJA al empleado y usuario con ID {id_a_borrar}?", icon='warning')
@@ -411,7 +408,6 @@ def baja_empleado(parent_window):
                 conn.close()
             
 def modificar_empleado(parent_window):
-    # ... (código igual) ...
     id_modificar = simpledialog.askinteger("Modificar Empleado", "Ingresa el ID del empleado a modificar:", parent=parent_window)
     if id_modificar is None: return
     nuevo_puesto = simpledialog.askstring("Modificar Empleado", f"Nuevo Puesto para ID {id_modificar}:", parent=parent_window)
@@ -526,7 +522,6 @@ def denegar_propuesta_reclutamiento(id_reclutamiento):
     cursor = conn.cursor()
 
     try:
-        # Verificar estado actual antes de cambiar
         sql_select = "SELECT Estado_Proceso FROM Reclutamiento WHERE ID_Reclutamiento = %s"
         cursor.execute(sql_select, (id_reclutamiento,))
         estado_proceso = cursor.fetchone()
@@ -539,7 +534,6 @@ def denegar_propuesta_reclutamiento(id_reclutamiento):
             messagebox.showwarning("Advertencia", "Esta propuesta ya fue procesada o no está pendiente de aprobación.")
             return
 
-        # Actualizar el estado a Denegado
         sql_update = """UPDATE Reclutamiento 
                         SET Estado_Proceso = %s, Fecha_Cierre = %s 
                         WHERE ID_Reclutamiento = %s"""
@@ -551,7 +545,6 @@ def denegar_propuesta_reclutamiento(id_reclutamiento):
 
         messagebox.showinfo("Éxito", f"Propuesta de Reclutamiento ID {id_reclutamiento} ha sido DENÉGADA y cerrada.")
         
-        # Opcional: Refrescar la ventana de candidatos si está abierta
         global lista_candidatos_window
         if lista_candidatos_window and lista_candidatos_window.winfo_exists():
             lista_candidatos_window.destroy()
@@ -566,7 +559,6 @@ def denegar_propuesta_reclutamiento(id_reclutamiento):
             conn.close()
 
 def ver_posibles_candidatos():
-    # ... (código igual) ...
     global lista_candidatos_window
     if lista_candidatos_window and lista_candidatos_window.winfo_exists():
         lista_candidatos_window.lift()
@@ -657,13 +649,13 @@ def cerrar_sesion_rrhh(root, parent_window):
     root.destroy()
     
     try:
-        subprocess.Popen([sys.executable, "login.py"])
+        subprocess.Popen([sys.executable, "Partes/home_deslog.py"])
         
     except Exception as e:
           messagebox.showerror("Error", f"Ocurrió un error al llamar a login: {e}")
 
 
-def abrir_rrhh(parent_window, nombre_usuario):
+def abrir_rrhh(parent_window, nombre_usuario, rol):
     if parent_window.winfo_exists():
         parent_window.withdraw() 
 
@@ -674,10 +666,18 @@ def abrir_rrhh(parent_window, nombre_usuario):
 
     frame_top = Frame(root, bg="#1dc1dd")
     frame_top.pack(pady=10, fill=X)
-    
-    Button(frame_top, text="❌ Cerrar Sesión", bg="#ff4d4d", fg="white",
-           font=("Arial", 12, "bold"), command=lambda: cerrar_sesion_rrhh(root, parent_window)).pack(pady=5, padx=20, fill=X)
-    
+
+    if rol == "Gerente":
+        Button(frame_top, text="⬅ Volver al Home", bg="#0089a1", fg="white",
+               font=("Arial", 12, "bold"),
+               command=lambda: volver_home_gerente(root, parent_window, nombre_usuario, rol)
+        ).pack(pady=5, padx=20, fill=X)
+    else:
+        Button(frame_top, text="❌ Cerrar Sesión", bg="#ff4d4d", fg="white",
+               font=("Arial", 12, "bold"),
+               command=lambda: cerrar_sesion_rrhh(root, parent_window)
+        ).pack(pady=5, padx=20, fill=X)
+
     Label(frame_top, text="Módulo de Recursos Humanos (RR.HH.)", bg="#1dc1dd", fg="white",
           font=("Arial", 18, "bold")).pack(pady=10)
 
@@ -701,8 +701,7 @@ def abrir_rrhh(parent_window, nombre_usuario):
 
     Button(frame_botones_emp, text="Ver Empleados", bg="#0089a1", fg="white", font=("Arial", 12, "bold"),
            width=18, command=ver_lista_empleados).pack(side=LEFT, padx=5)
-    
-    
+
     frame_reclutamiento = Frame(frame_acciones, bg="#1dc1dd")
     frame_reclutamiento.pack(pady=5)
     Label(frame_reclutamiento, text="Reclutamiento y Conexión de Datos", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
@@ -712,18 +711,28 @@ def abrir_rrhh(parent_window, nombre_usuario):
     Button(frame_botones_rec, text="Ver Candidatos", bg="#006779", fg="white", font=("Arial", 12, "bold"),
            width=25, command=ver_posibles_candidatos).pack(side=LEFT, padx=10)
 
-
     root.mainloop()
+    
+def volver_home_gerente(root, parent_window, nombre_usuario, rol):
+    """Vuelve al home del gerente sin cerrar sesión."""
+    root.destroy()
+    subprocess.Popen([sys.executable, "Partes/home_gerente.py", nombre_usuario, rol])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main_root = Tk()
     main_root.title("Simulación de Home Oculto")
-    # Si ejecutas rrhh_empleado.py directamente desde la terminal
-    if len(sys.argv) > 1:
+
+    if len(sys.argv) > 2:
         nombre_usuario = sys.argv[1]
+        rol = sys.argv[2]
     else:
         nombre_usuario = "Test RRHH"
-    main_root.withdraw() 
-    abrir_rrhh(main_root, nombre_usuario)
-    
+        rol = "Empleado"   
+
+    main_root.withdraw()
+    abrir_rrhh(main_root, nombre_usuario, rol)
     main_root.mainloop()
+
+
+    

@@ -41,7 +41,8 @@ def conectar_bd():
 # --- Función para crear entradas con placeholder ---
 def crear_entry(frame, placeholder, y, show=None):
     """Crea un campo de entrada (Entry) con lógica de placeholder."""
-    entry = Entry(frame, width=35, fg='black', border=0, bg='white',
+    # Reducimos un poco el ancho del Entry para el frame más pequeño
+    entry = Entry(frame, width=30, fg='black', border=0, bg='white',
                   font=('Billie DEMO Light', 11), show=show)
     entry.place(x=30, y=y)
     entry.insert(0, placeholder)
@@ -109,19 +110,19 @@ def _handle_signin(root_window):
             target_script = None
             
             if rol == "Gerente":
-                target_script = "home_gerente.py"
+                target_script = "Partes/home_gerente.py"
             elif id_departamento == ID_DEPARTAMENTO_RRHH:
-                target_script = "rrhh_empleado.py"
+                target_script = "Partes/rrhh_empleado.py"
             elif id_departamento == ID_DEPARTAMENTO_Finanzas:
-                target_script = "finanzas.py"
+                target_script = "Partes/finanzas.py"
             elif id_departamento == ID_DEPARTAMENTO_Marketing:
-                target_script = "marketing.py"
+                target_script = "Partes/marketing.py"
             elif id_departamento == ID_DEPARTAMENTO_Servicio_al_cliente:
-                target_script = "servicio_cliente.py"
+                target_script = "Partes/servicio_cliente.py"
             elif id_departamento == ID_DEPARTAMENTO_Logistica:
-                target_script = "logistica.py"
+                target_script = "Partes/sedes.py"
             elif id_departamento == ID_DEPARTAMENTO_Direccion:
-                target_script = "home_direccion.py" 
+                target_script = "Partes/home_direccion.py" 
             else:
                 if id_departamento is not None:
                     target_script = "home.py"
@@ -162,38 +163,33 @@ def abrir_login(root_window):
         widget.destroy()
 
     root_window.title('Login')
-    root_window.geometry('1200x500+300+200')
+    # 📏 CAMBIO CLAVE: Reducir el tamaño de la ventana a 400x300
+    root_window.geometry('400x300+400+250') 
     root_window.configure(bg="#1dc1dd")
     root_window.resizable(False, False)
 
     # --- Interfaz ---
-    frame = Frame(root_window, width=500, height=500, bg="#1dc1dd")
-    frame.place(x=480, y=70)
+    # Reducir el frame para que quepa en la ventana pequeña y centrarlo
+    frame = Frame(root_window, width=350, height=250, bg="#1dc1dd")
+    # Colocar el frame en el centro de la nueva ventana (400-350)/2 = 25
+    frame.place(x=25, y=25)
 
     heading = Label(frame, text='Iniciar sesión', fg='white', bg='#1dc1dd',
-                    font=('Billie DEMO Light', 23, 'bold'))
-    heading.place(x=87, y=5)
+                    font=('Billie DEMO Light', 20, 'bold')) # Reducir un poco el tamaño de fuente
+    # Ajustar posición del título para centrarlo en el frame de 350px de ancho
+    heading.place(x=85, y=5)
 
     # Asignación de variables globales de Entrada
-    user = crear_entry(frame, "Correo Electronico", 60)
-    code = crear_entry(frame, "Contraseña", 120, show="")
-
-    def abrir_registro():
-        root_window.destroy()
-        subprocess.Popen([sys.executable, "registro.py"])
-
-    label = Label(frame, text="¿No tenés cuenta?", fg='white', bg="#1dc1dd",
-                  font=('Billie DEMO Light', 11, 'bold'))
-    label.place(x=75, y=180)
-
-    sign_up = Button(frame, width=10, text='Registrarse', border=0, bg="#0089a1",
-                     cursor='hand2', fg="#ffffff", command=abrir_registro)
-    sign_up.place(x=215, y=180)
+    # La y=60 y y=120 es relativa al nuevo frame
+    user = crear_entry(frame, "Correo Electronico", 60) 
+    code = crear_entry(frame, "Contraseña", 110, show="") # Subimos un poco la contraseña
 
     # El botón llama a la función de manejo de inicio de sesión
+    # Se ajusta la posición y para estar cerca de los campos de entrada
     enter = Button(frame, width=10, text='Entrar', border=0, bg="#0089a1",
-                     cursor='hand2', fg="#ffffff", command=lambda: _handle_signin(root_window))
-    enter.place(x=130, y=220)
+                      cursor='hand2', fg="#ffffff", command=lambda: _handle_signin(root_window))
+    # Centrar el botón en el frame (350/2 - 70/2 = 175 - 35 = 140)
+    enter.place(x=140, y=170) 
 
 
 # =======================================================

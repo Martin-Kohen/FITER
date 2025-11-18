@@ -11,15 +11,12 @@ root.configure(bg="#1dc1dd")
 
 def abrir_login():
     root.destroy()
-    subprocess.Popen(["python", "login.py"])
+    subprocess.Popen(["python", "Partes/login.py"])
 
 def abrir_home():
     root.destroy()
-    subprocess.Popen(["python", "home.py"])
+    subprocess.Popen(["python", "Partes/home.py"])
 
-def abrir_registro():
-    root.destroy()
-    subprocess.Popen(["python", "registro.py"])
 
 def abrir_instagram():
     webbrowser.open("https://www.instagram.com/somosfiter")
@@ -39,12 +36,10 @@ if len(sys.argv) > 1:
     sign_up.place(x=215, y=335)
 else:
     sign_up = Button(frame, width=15, height=1 , text='Iniciar Sesión', border=0, bg="#03abc9", cursor='hand2', fg="#ffffff", font=("Billie DEMO Light", 15, "bold"), command=abrir_login)
-    sign_up.place(relx=0.9, rely=0.06, anchor="center")
-    sign_up = Button(frame, width=15, height=1 , text='Registrarse', border=0, bg="#03abc9", cursor='hand2', fg="#ffffff", font=("Billie DEMO Light", 15, "bold"), command=abrir_registro)
-    sign_up.place(relx=0.78, rely=0.06, anchor="center")
+    sign_up.place(relx=0.812, rely=0.06, anchor="center")
 
 try:
-    imagen_original = Image.open("../imagenes/Mision.png")
+    imagen_original = Image.open("imagenes/Mision.png")
     imagen_redimensionada = imagen_original.resize((450, 350), Image.Resampling.LANCZOS)  
     imagen = ImageTk.PhotoImage(imagen_redimensionada)
     label_imagen = Label(frame, image=imagen, bg="#1dc1dd")

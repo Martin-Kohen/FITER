@@ -3,8 +3,9 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import mysql.connector
 from datetime import date
-
-# --- Configuración de la Base de Datos ---
+import subprocess
+import sys 
+# Configuración de la conexión a la base de datos
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
@@ -21,11 +22,8 @@ def conectar_bd():
         messagebox.showerror("Error de Conexión", f"No se pudo conectar a la BD: {err}")
         return None
 
-# --- Funciones de Lógica de Finanzas (Creación y Simulación) ---
-
 def actualizar_ingreso(parent_window):
     """Inserta un nuevo registro de ingreso."""
-    # (Código sin cambios)
     monto = simpledialog.askfloat("Nuevo Ingreso", "Monto del Ingreso:", parent=parent_window)
     if monto is None or monto <= 0: return
     descripcion = simpledialog.askstring("Nuevo Ingreso", "Descripción:", parent=parent_window)
@@ -52,7 +50,6 @@ def actualizar_ingreso(parent_window):
 
 def generar_presupuesto(parent_window):
     """Registra un nuevo presupuesto."""
-    # (Código sin cambios)
     año = simpledialog.askinteger("Generar Presupuesto", "Año del Presupuesto (ej. 2026):", parent=parent_window)
     if not año: return
     monto = simpledialog.askfloat("Generar Presupuesto", "Monto Total Estimado:", parent=parent_window)
@@ -75,7 +72,6 @@ def generar_presupuesto(parent_window):
 
 def generar_plan_financiero(parent_window):
     """Registra una nueva Planificación."""
-    # (Código sin cambios)
     periodo = simpledialog.askstring("Plan Financiero", "Periodo (ej. Trimestre 3):", parent=parent_window)
     if not periodo: return
     objetivo = simpledialog.askstring("Plan Financiero", "Objetivo Principal:", parent=parent_window)
@@ -96,20 +92,11 @@ def generar_plan_financiero(parent_window):
 
 def ver_lista_bajas():
     """Simula la consulta a las tablas de bajas de otras áreas."""
-    # (Código sin cambios)
     messagebox.showinfo("Lista de Bajas", "Simulación:\nMostrando registros de bajas de Clientes/Máquinas...")
 
-def actualizar_empleados_maquinas():
-    """Simula la acción de mantener actualizados los maestros."""
-    # (Código sin cambios)
-    messagebox.showinfo("Actualizar Maestros", "Simulación:\nSe ha iniciado la actualización de la lista maestra de Empleados y Maquinaria.")
-
-
-# --- Funciones de Historial (Consultas) ---
 
 def mostrar_historial(tabla, titulo, columnas, consulta_sql):
     """Función genérica para mostrar cualquier historial en una nueva ventana."""
-    # (Código sin cambios)
     top = Toplevel()
     top.title(f"Historial de {titulo}")
     top.geometry("800x400")
@@ -142,9 +129,6 @@ def ver_historial_presupuestos():
 
 def ver_historial_planes():
     mostrar_historial("Planificacion", "Planes Financieros", ["ID", "Fecha", "Período", "Objetivo"], "SELECT ID_Planificacion, Fecha, Periodo, Objetivo FROM Planificacion ORDER BY Fecha DESC")
-
-
-# --- NUEVAS Funciones para Bajas (Eliminar) ---
 
 def baja_generica(parent_window, nombre_entidad, tabla, id_columna):
     """Función genérica para eliminar un registro por ID."""
@@ -185,77 +169,97 @@ def baja_plan(parent_window):
     """Da de baja un plan financiero."""
     baja_generica(parent_window, "Plan Financiero", "Planificacion", "ID_Planificacion")
 
-
-# --- Función Principal de la Ventana de Finanzas (Diseño Actualizado) ---
-
-def abrir_finanzas(parent_window, nombre_usuario):
-    parent_window.withdraw()
+def abrir_finanzas(parent_window, nombre_usuario, rol):
+    # La ventana principal (parent_window) se oculta para que no aparezca
+    # si la aplicación se inicia directamente.
+    parent_window.withdraw() 
     root = Toplevel()
     root.title(f"Finanzas - Usuario: {nombre_usuario}")
     root.state("zoomed")
     root.configure(bg="#1dc1dd")
 
-    def volver_home():
-        root.destroy()
-        parent_window.deiconify()
-        parent_window.state("zoomed")
-
     frame_top = Frame(root, bg="#1dc1dd")
     frame_top.pack(pady=10, fill=X)
-    Button(frame_top, text="← Volver al Home", bg="#ff4d4d", fg="white", font=("Arial", 12, "bold"), command=volver_home).pack(pady=5, padx=20, fill=X)
-    Label(frame_top, text="Módulo de Finanzas", bg="#1dc1dd", fg="white", font=("Arial", 18, "bold")).pack(pady=10)
 
-    # --- Contenedor Principal de Acciones ---
-    frame_acciones = Frame(root, bg="#1dc1dd")
-    frame_acciones.pack(pady=10)
+    if rol == "Gerente":
+        Button(frame_top, text="⬅ Volver al Home", bg="#0089a1", fg="white",
+                font=("Arial", 12, "bold"),
+                command=lambda: volver_home_gerente(root, parent_window, nombre_usuario, rol)
+        ).pack(pady=5, padx=20, fill=X)
+    else:
+        Button(frame_top, text="❌ Cerrar Sesión", bg="#ff4d4d", fg="white",
+                font=("Arial", 12, "bold"),
+                command=lambda: cerrar_sesion_finanzas(root, parent_window)
+        ).pack(pady=5, padx=20, fill=X)
 
-    # --- Fila 1: Operaciones Principales ---
-    frame_operaciones = Frame(frame_acciones, bg="#1dc1dd")
-    frame_operaciones.pack(pady=5)
-    Label(frame_operaciones, text="Operaciones y Planeación", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
-    frame_botones_op = Frame(frame_operaciones, bg="#1dc1dd")
-    frame_botones_op.pack()
+    Label(frame_top, text="Módulo de Finanzas", bg="#1dc1dd", fg="white",
+            font=("Arial", 18, "bold")).pack(pady=10)
 
-    Button(frame_botones_op, text="Registrar Ingreso", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: actualizar_ingreso(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="Generar Presupuesto", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: generar_presupuesto(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="Generar Plan Financiero", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=lambda: generar_plan_financiero(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_op, text="Actualizar Maestros", bg="#0089a1", fg="white", font=("Billie DEMO Light", 12, "bold"), width=22, command=actualizar_empleados_maquinas).pack(side=LEFT, padx=5)
+    frame_acc = Frame(root, bg="#1dc1dd")
+    frame_acc.pack(pady=20)
 
-    # --- Fila 2: Consultas e Historiales ---
-    frame_consultas = Frame(frame_acciones, bg="#1dc1dd")
-    frame_consultas.pack(pady=5)
-    Label(frame_consultas, text="Historiales y Consultas", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
-    frame_botones_hist = Frame(frame_consultas, bg="#1dc1dd")
-    frame_botones_hist.pack()
+    Button(frame_acc, text="Registrar Ingreso", bg="#0089a1", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: actualizar_ingreso(root)).pack(pady=10)
 
-    Button(frame_botones_hist, text="Historial Ingresos", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_ingresos).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="Historial Presupuestos", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_presupuestos).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="Historial Planes", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_historial_planes).pack(side=LEFT, padx=5)
-    Button(frame_botones_hist, text="Ver Bajas (Clientes/Maq)", bg="#006779", fg="white", font=("Arial", 12, "bold"), width=22, command=ver_lista_bajas).pack(side=LEFT, padx=5)
+    Button(frame_acc, text="Generar Presupuesto", bg="#0089a1", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: generar_presupuesto(root)).pack(pady=10)
 
-    # --- Fila 3: Bajas (Acciones de Eliminación) ---
-    frame_bajas = Frame(frame_acciones, bg="#1dc1dd")
-    frame_bajas.pack(pady=5)
-    Label(frame_bajas, text="Eliminación de Registros", bg="#1dc1dd", fg="white", font=("Arial", 14, "bold")).pack(pady=5)
-    frame_botones_bajas = Frame(frame_bajas, bg="#1dc1dd")
-    frame_botones_bajas.pack()
+    Button(frame_acc, text="Generar Plan Financiero", bg="#0089a1", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: generar_plan_financiero(root)).pack(pady=10)
 
-    Button(frame_botones_bajas, text="➖ Baja de Ingreso", bg="#dc3545", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: baja_ingreso(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_bajas, text="➖ Baja de Presupuesto", bg="#dc3545", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: baja_presupuesto(root)).pack(side=LEFT, padx=5)
-    Button(frame_botones_bajas, text="➖ Baja de Plan Financiero", bg="#dc3545", fg="white", font=("Arial", 12, "bold"), width=22, command=lambda: baja_plan(root)).pack(side=LEFT, padx=5)
+    Button(frame_acc, text="Historial Ingresos", bg="#006779", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=ver_historial_ingresos).pack(pady=10)
+
+    Button(frame_acc, text="Historial Presupuestos", bg="#006779", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=ver_historial_presupuestos).pack(pady=10)
+
+    Button(frame_acc, text="Historial Planes", bg="#006779", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=ver_historial_planes).pack(pady=10)
+
+    Button(frame_acc, text="Baja de Ingreso", bg="#dc3545", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: baja_ingreso(root)).pack(pady=10)
+
+    Button(frame_acc, text="Baja de Presupuesto", bg="#dc3545", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: baja_presupuesto(root)).pack(pady=10)
+
+    Button(frame_acc, text="Baja de Plan Financiero", bg="#dc3545", fg="white",
+            font=("Arial", 14, "bold"), width=25,
+            command=lambda: baja_plan(root)).pack(pady=10)
 
     root.mainloop()
+def volver_home_gerente(root, parent_window, nombre_usuario, rol):
+    """Vuelve al home del gerente sin cerrar sesión."""
+    root.destroy()
+    subprocess.Popen([sys.executable, "Partes/home_gerente.py", nombre_usuario, rol])
 
-# --- Ejemplo de uso ---
+
+def cerrar_sesion_finanzas(root, parent_window):
+    """Cierra sesión y vuelve al login."""
+    root.destroy()
+    subprocess.Popen([sys.executable, "Partes/home_deslog.py"])
+
+
+# --- Inicio directo de la aplicación ---
 if __name__ == '__main__':
+    # Creamos la ventana principal (root) pero la ocultamos inmediatamente
+    # para que la aplicación inicie directamente en el módulo de Finanzas.
     main_root = Tk()
-    main_root.title("Home")
-    main_root.geometry("400x200")
+    main_root.withdraw() # Oculta la ventana principal
+
+    # Datos de usuario de prueba
+    nombre_usuario = "Test Finanzas"
+    rol = "Empleado"
+
+    # Llamada directa para abrir el módulo de Finanzas usando el root oculto como padre
+    abrir_finanzas(main_root, nombre_usuario, rol)
     
-    def ejecutar_finanzas():
-        abrir_finanzas(main_root, "CFO")
-
-    Label(main_root, text="Ventana Principal", font=("Arial", 16, "bold")).pack(pady=20)
-    Button(main_root, text="Abrir Módulo de Finanzas", bg="#1dc1dd", fg="white", font=("Arial", 12, "bold"), command=ejecutar_finanzas).pack(pady=10)
-
+    # Iniciar el bucle de eventos
     main_root.mainloop()
