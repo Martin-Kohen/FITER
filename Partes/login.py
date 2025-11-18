@@ -14,12 +14,11 @@ ID_DEPARTAMENTO_Servicio_al_cliente = 5
 ID_DEPARTAMENTO_Logistica = 6 
 
 # --- Variables Globales para las Entradas ---
-# Se inicializan como None y se asignan en abrir_login
 user = None 
 code = None
 
 
-# --- Función para hashear la contraseña ---
+# --- Función para hashear la contraseña (CRÍTICA) ---
 def hash_password(password):
     """Retorna el hash SHA256 de la contraseña."""
     return hashlib.sha256(password.encode()).hexdigest()
@@ -72,7 +71,6 @@ def _handle_signin(root_window):
     """Maneja el inicio de sesión, autenticación y redirección."""
     global user, code
     
-    # Verificación de Entradas (se usa la variable global asignada en abrir_login)
     correo = user.get().strip()
     contrasena = code.get()
 
@@ -87,9 +85,7 @@ def _handle_signin(root_window):
     cursor = db.cursor()
 
     try:
-        # CONSULTA CLAVE: Selecciona todos los datos necesarios para la autenticación y la redirección.
         sql_query = "SELECT idUsuario, Nombre, Contrasenia, Rol, ID_Departamento FROM usuario WHERE Mail = %s"
-        # Asegúrate de que las columnas Rol y ID_Departamento existan en tu tabla 'usuario'.
         cursor.execute(sql_query, (correo,))
         result = cursor.fetchone()
 
@@ -97,11 +93,10 @@ def _handle_signin(root_window):
             messagebox.showerror("Error", "El usuario no existe.")
             return
 
-        # Desempaquetado del resultado (asumiendo 5 columnas)
         user_id, nombre_usuario, contrasenia_bd, rol, id_departamento = result
 
+        # ✅ VERIFICACIÓN DEL HASH: Compara el hash de la contraseña ingresada con el hash de la BD
         if hash_password(contrasena) == contrasenia_bd:
-            # Autenticación exitosa
             
             # 1. Marcar como logueado
             cursor.execute("UPDATE usuario SET logueado = 1 WHERE idUsuario = %s", (user_id,))
@@ -111,17 +106,11 @@ def _handle_signin(root_window):
             root_window.destroy() # Cierra la ventana de login
             
             # 2. LÓGICA DE REDIRECCIÓN BASADA EN ROL Y ID_DEPARTAMENTO
-            
-            # Nota: Los scripts deben existir en el mismo directorio.
-            # Los argumentos se pasan como una lista.
-
             target_script = None
             
             if rol == "Gerente":
-                # Redirección de Gerentes (alta prioridad por Rol)
                 target_script = "home_gerente.py"
             elif id_departamento == ID_DEPARTAMENTO_RRHH:
-                # Módulo de Recursos Humanos (Empleado/General)
                 target_script = "rrhh_empleado.py"
             elif id_departamento == ID_DEPARTAMENTO_Finanzas:
                 target_script = "finanzas.py"
@@ -132,16 +121,14 @@ def _handle_signin(root_window):
             elif id_departamento == ID_DEPARTAMENTO_Logistica:
                 target_script = "logistica.py"
             elif id_departamento == ID_DEPARTAMENTO_Direccion:
-                # Si Dirección no es Gerente, puede tener su propio home
                 target_script = "home_direccion.py" 
             else:
-                # Fallback para empleados sin roles específicos pero con departamento
                 if id_departamento is not None:
-                     target_script = "home.py"
+                    target_script = "home.py"
 
             if target_script:
-                # Ejecuta el módulo correspondiente
-                subprocess.Popen([sys.executable, target_script, nombre_usuario])
+                # 🚨 CORRECCIÓN CLAVE: Pasamos el nombre de usuario Y el rol
+                subprocess.Popen([sys.executable, target_script, nombre_usuario, rol])
             else:
                 messagebox.showerror("Error de Asignación", 
                                      f"El usuario tiene un rol ({rol}) o departamento ({id_departamento}) sin ventana de inicio asignada.")
@@ -165,15 +152,12 @@ def _handle_signin(root_window):
 def abrir_login(root_window):
     """
     Función que configura e inicia la interfaz de login. 
-    Limpia la ventana principal si se regresa de otra ventana.
     """
     global user, code
     
-    # Si la ventana principal estaba oculta (por otro módulo), la volvemos a mostrar
     if not root_window.winfo_ismapped():
         root_window.deiconify() 
     
-    # Limpiar cualquier widget anterior (útil al regresar de RR.HH.)
     for widget in root_window.winfo_children():
         widget.destroy()
 
@@ -196,7 +180,6 @@ def abrir_login(root_window):
 
     def abrir_registro():
         root_window.destroy()
-        # Nota: Usamos sys.executable para mayor compatibilidad
         subprocess.Popen([sys.executable, "registro.py"])
 
     label = Label(frame, text="¿No tenés cuenta?", fg='white', bg="#1dc1dd",
@@ -209,12 +192,12 @@ def abrir_login(root_window):
 
     # El botón llama a la función de manejo de inicio de sesión
     enter = Button(frame, width=10, text='Entrar', border=0, bg="#0089a1",
-                   cursor='hand2', fg="#ffffff", command=lambda: _handle_signin(root_window))
+                     cursor='hand2', fg="#ffffff", command=lambda: _handle_signin(root_window))
     enter.place(x=130, y=220)
 
 
 # =======================================================
-# 🚀 EJECUCIÓN DEL MÓDULO (Para abrir login cuando ejecutas login.py)
+# 🚀 EJECUCIÓN DEL MÓDULO
 # =======================================================
 if __name__ == '__main__':
     main_root = Tk()
